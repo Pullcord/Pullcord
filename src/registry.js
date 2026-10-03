@@ -41,6 +41,40 @@ export const REGISTRY = [
       { key: "FeeTo", type: "address" },
     ],
   },
+  {
+    id: "usdc-asset-contract",
+    protocol: "Circle USDC",
+    role: "stellar-asset-contract",
+    contractId: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+    source: "issuer GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN from https://developers.circle.com/stablecoins/usdc-contract-addresses; contract id computed with `stellar contract id asset --network mainnet` (matches the 402 challenge contract)",
+    fields: [{ key: "Admin", type: "address" }],
+  },
+  // Operation of this admin contract by Circle: NO VERIFICADO. Only its on-chain Owner is read.
+  {
+    id: "usdc-admin-contract",
+    protocol: "Circle USDC",
+    role: "admin-contract",
+    contractId: "CCPLJV7AKKFIE4LXFVUWZXDI2HNLEC7U3CQHAMVDLYHQFGMGVTCR4D5W",
+    source: "value of Admin in usdc-asset-contract instance storage (read via getLedgerEntries)",
+    fields: [{ key: "Owner", type: "address" }],
+  },
+  {
+    id: "eurc-asset-contract",
+    protocol: "Circle EURC",
+    role: "stellar-asset-contract",
+    contractId: "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV",
+    source: "issuer GDHU6WRG4IEQXM5NZ4BMPKOXHW76MZM4Y2IEMFDVXBSDP6SJY4ITNPP2 from https://developers.circle.com/stablecoins/eurc-contract-addresses; contract id computed with `stellar contract id asset --network mainnet`",
+    fields: [{ key: "Admin", type: "address" }],
+  },
+  // Operation of this admin contract by Circle: NO VERIFICADO. Only its on-chain Owner is read.
+  {
+    id: "eurc-admin-contract",
+    protocol: "Circle EURC",
+    role: "admin-contract",
+    contractId: "CDCGJQS74ZKTL6TSP6JCXLEKOFO7RSA76QQCJD7PIIRZ2RLKPRZRHLRP",
+    source: "value of Admin in eurc-asset-contract instance storage (read via getLedgerEntries)",
+    fields: [{ key: "Owner", type: "address" }],
+  },
 ];
 
 export function findContract(id) {
