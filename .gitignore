@@ -1,11 +1,7 @@
 # Local-only material: exists on the machine, not part of the public repo.
 # See CLAUDE.md, section "Locales".
+.claude/
 playbooks/
-.claude/skills/teammate-commit-identity/
-.claude/skills/mexico-legal-check/
-.claude/skills/ecosystem-skills-installer/
-.claude/skills/repo-security-sweep/
-.claude/commands/session-close.md
 
 # Secrets and build output
 .env

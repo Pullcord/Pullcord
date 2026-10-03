@@ -10,25 +10,17 @@ archivo es el mapa, no el reglamento.
 | Archivo | Qué es |
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Reglas del proyecto. Léelo primero. |
+| [README.md](README.md) | Qué es Pullcord y su estado |
+| [LICENSE](LICENSE) | Apache License 2.0 |
 | [.mcp.json](.mcp.json) | Raven MCP (`https://raven.stellar.org/mcp`, OAuth; entrar con `/mcp`) |
 | [.gitignore](.gitignore) | Excluye lo local de abajo y secretos |
-| `.claude/skills/public-claim-verify/` | Verificar un claim antes de publicarlo |
-| `.claude/skills/doc-accuracy-audit/` | Auditar que la documentación pública sea exacta |
-| `.claude/skills/claude-antigravity-setup/` | Configurar un proyecto para Claude Code y Antigravity |
-| `.claude/skills/full-context-loading/` | Responder con el contexto ya disponible, sin releer todo |
-| `.claude/skills/hackathon-fit-check/` | Revisar si un hackathon encaja |
-| `.claude/skills/grants-track-record/` | Verificar el historial de un programa de grants |
 
 ## Local: existe en esta máquina, NO está en el repo
 
 Un clon no tiene estos archivos. No los cites desde un archivo público.
 
 - `playbooks/`: notas de investigación y procesos del equipo.
-- `.claude/skills/teammate-commit-identity/`: actuar bajo la identidad de GitHub de otra persona.
-- `.claude/skills/mexico-legal-check/`: revisar un producto contra la regulación mexicana.
-- `.claude/skills/ecosystem-skills-installer/`: encontrar, verificar e instalar skills de un ecosistema.
-- `.claude/skills/repo-security-sweep/`: buscar exposición en los repos reales de una cuenta.
-- `.claude/commands/session-close.md`: revisión de higiene al cerrar sesión.
+- `.claude/`: todas las skills (`public-claim-verify`, `doc-accuracy-audit`, `claude-antigravity-setup`, `full-context-loading`, `hackathon-fit-check`, `grants-track-record`, `teammate-commit-identity`, `mexico-legal-check`, `ecosystem-skills-installer`, `repo-security-sweep`) y el comando `session-close.md`.
 
 ## Stellar
 
