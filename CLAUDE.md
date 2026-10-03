@@ -47,6 +47,7 @@ llegar a git. Nunca se copia al repo.
 
 ## Estado
 
-Repo recién configurado (2026-10-03). Sin commits todavía y sin código del
-producto. El remoto `origin` apunta a `Eras256/Pullcord` (público, vacío). No se
-ha creado la org `pullcord` ni ningún paquete npm.
+Repo configurado (2026-10-03). Un commit en `main`: `6cbede6`, publicado en
+`origin`. Sin código del producto todavía. El remoto `origin` apunta a
+`Pullcord/Pullcord` (público, transferido desde `Eras256/Pullcord`). La org
+`Pullcord` existe. No se ha creado ningún paquete npm.
