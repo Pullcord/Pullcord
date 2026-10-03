@@ -22,6 +22,14 @@ MVP:
    comparar lo declarado contra lo que hay en la cadena.
 3. Alertas por cambio de wasm o de admin.
 4. API JSON para que otras apps lo muestren.
+5. Cobro por consulta de la API con x402 (pago por llamada). Una parte de la
+   API queda gratis para humanos e integradores básicos; la consulta para
+   agentes y de alto volumen se paga. Se usa un middleware estándar (`@x402/express`
+   o el oficial que corresponda) y un facilitador existente: no se construye un
+   facilitador y no se depende de ningún otro proyecto. El
+   facilitador se acepta solo con evidencia de un pago liquidado, no con un
+   reto 402. En el bootcamp, solo testnet. En mainnet, el cobro llega solo a
+   una wallet propia de Pullcord; nada es custodial.
 
 ## Reglas duras
 
