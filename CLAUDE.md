@@ -39,7 +39,8 @@ llegar a git. Nunca se copia al repo.
 
 ## Estado
 
-Repo configurado (2026-10-03). Un commit en `main`: `6cbede6`, publicado en
-`origin`. Sin código del producto todavía. El remoto `origin` apunta a
-`Pullcord/Pullcord` (público, transferido desde `Eras256/Pullcord`). La org
-`Pullcord` existe. No se ha creado ningún paquete npm.
+Repo configurado (2026-10-03). `main` en `3aa2b67`, publicado en `origin`
+(`Pullcord/Pullcord`, público). Código del MVP en la rama
+`feat/mvp-read-engine`: motor de lectura de solo lectura, API con ruta gratis y
+ruta de pago x402 (desactivada sin configuración), pruebas con datos sintéticos.
+Sin desplegar y sin mergear a `main`. No se ha creado ningún paquete npm.

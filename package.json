@@ -1,0 +1,22 @@
+{
+  "name": "@pullcord/core",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Read-only engine that reports the privileged roles of Stellar DeFi contracts, with sources.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test --test-force-exit test/*.test.js"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^16.3.0",
+    "@x402/core": "^2.27.0",
+    "@x402/express": "^2.27.0",
+    "@x402/stellar": "^2.27.0",
+    "express": "^5.2.1"
+  }
+}
