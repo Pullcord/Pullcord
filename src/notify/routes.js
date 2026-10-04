@@ -15,6 +15,21 @@ export const SUPPORTED_EVENTS = ["payment.received"];
 const isG = (a) => typeof a === "string" && StrKey.isValidEd25519PublicKey(a);
 const isC = (a) => typeof a === "string" && StrKey.isValidContract(a);
 
+// A short name for the integrating app, e.g. for the 9-oct bootcamp count
+// (see playbooks/bootcamp-integrations-tracker.md). It identifies the APP,
+// never a person: no emails, phone numbers, chat IDs or full names. This is
+// a rule for callers, not something the server can verify, so it's enforced
+// only as length and character checks.
+function checkAppLabel(raw) {
+  if (raw === undefined || raw === null) return { value: null };
+  if (typeof raw !== "string") return { error: "appLabel must be a string" };
+  const value = raw.trim();
+  if (value.length === 0) return { value: null };
+  if (value.length > 40) return { error: "appLabel must be 40 characters or fewer" };
+  if (!/^[\x20-\x7e]+$/.test(value)) return { error: "appLabel must be printable ASCII (no emails, chat IDs or personal data)" };
+  return { value };
+}
+
 // Returns a problem string, or null if the URL may be stored. DNS is resolved
 // here for fast feedback and again at every delivery (ssrf.js).
 export async function checkWebhookUrl(raw, { allowHttp = false, resolve } = {}) {
@@ -47,6 +62,7 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
     channel: s.channel,
     linked: s.channel === "webhook" || Boolean(s.telegram_chat_id),
     ownershipProof: s.ownership_proof,
+    appLabel: s.app_label,
     createdAt: s.created_at,
   });
 
@@ -62,12 +78,14 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
 
   // Step 2: subscribe with the signed challenge.
   r.post("/", async (req, res) => {
-    const { address, contract, events = SUPPORTED_EVENTS, channel = {}, proof } = req.body || {};
+    const { address, contract, events = SUPPORTED_EVENTS, channel = {}, proof, appLabel } = req.body || {};
     if (contract) return res.status(501).json({ error: "contract subscriptions are not supported yet" });
     if (!isG(address) && !isC(address)) return res.status(400).json({ error: "address must be a valid G or C address" });
     if (!Array.isArray(events) || events.length === 0 || !events.every((e) => SUPPORTED_EVENTS.includes(e))) {
       return res.status(400).json({ error: "unsupported events", supported: SUPPORTED_EVENTS });
     }
+    const label = checkAppLabel(appLabel);
+    if (label.error) return res.status(400).json({ error: label.error });
 
     let ownershipProof;
     if (isG(address)) {
@@ -83,7 +101,7 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
       ownershipProof = "none";
     }
 
-    const base = { address, events, ownershipProof };
+    const base = { address, events, ownershipProof, appLabel: label.value };
     let created;
     if (channel.webhook) {
       const problem = await checkWebhookUrl(channel.webhook, { allowHttp: cfg.allowHttpWebhooks, resolve });
@@ -105,6 +123,11 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
       note: "secret and manageToken are shown only once",
     });
   });
+
+  // Aggregate only: no labels, addresses or secrets. Safe to show on a screen
+  // during the demo. appsIntegrated is the 9-oct criterion (distinct appLabel
+  // with >= 1 delivered notification).
+  r.get("/stats", (_req, res) => res.json(store.stats()));
 
   r.get("/:id", (req, res) => {
     const sub = store.authorize(req.params.id, bearer(req));

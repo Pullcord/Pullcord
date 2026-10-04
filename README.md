@@ -19,6 +19,10 @@ nada por el usuario.
   en testnet** y la API las marca `ownershipProof: "none"` con un aviso.
 - Paquete [`@pullcord/notify`](packages/notify) (sin publicar en npm) y un
   [ejemplo de 15 líneas](examples/subscribe.js).
+- `appLabel` opcional en cada suscripción: un nombre corto de la app que
+  integra Pullcord (nunca un dato personal). `GET /v1/subscriptions/stats`
+  expone el conteo agregado de apps integradas, suscripciones y avisos
+  enviados — sin direcciones ni labels individuales.
 
 Prueba en testnet del 2026-10-04: avisos con firma verificada de pagos USDC y
 XLM a `GDBXA45U…DOBH`, por ejemplo la tx

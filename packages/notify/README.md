@@ -15,6 +15,7 @@ const pullcord = new Pullcord({ url: process.env.PULLCORD_URL });
 
 const sub = await pullcord.subscribe({
   address: "G...",
+  appLabel: "mi-app",             // opcional, nombre de TU app, sin datos personales
   events: ["payment.received"],
   channel: { webhook: "https://tu-app.example/pullcord" }, // o { telegram: true }
   signMessage: (message) => wallet.signMessage(message),  // SEP-53, con la wallet del usuario

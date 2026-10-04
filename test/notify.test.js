@@ -18,6 +18,7 @@ import { accountFromSeed, contractIdFromSeed } from "./helpers.js";
 const ALICE = accountFromSeed(11);
 const BOB = accountFromSeed(12);
 const BOB_KEY = Keypair.fromRawEd25519Seed(Buffer.alloc(32, 12)); // synthetic; BOB_KEY.publicKey() === BOB
+const ALICE_KEY = Keypair.fromRawEd25519Seed(Buffer.alloc(32, 11)); // synthetic; ALICE_KEY.publicKey() === ALICE
 const SAC = contractIdFromSeed(20);
 
 // Synthetic RPC event shaped like CAP-67 `transfer`.
@@ -311,5 +312,64 @@ test("API and client: read, validation errors, unsubscribe", async () => {
   await assert.rejects(pc.subscribe({ address: BOB, channel: { webhook: "https://127.0.0.1/x" }, signMessage }), { status: 400 });
   await pc.unsubscribe(hook.id, hook.manageToken);
   assert.equal(store.get(hook.id), null);
+  server.close();
+});
+
+test("appLabel: stored, returned, validated, and counted only once sent", async () => {
+  const { store, server, pc } = await apiServer();
+  const signMessage = (m) => BOB_KEY.signMessage(m);
+
+  // No appLabel: fine, stays null.
+  const noLabel = await pc.subscribe({ address: BOB, channel: { webhook: "https://app.example/hook" }, signMessage });
+  assert.equal(noLabel.appLabel, null);
+
+  // Rejects personal-looking or oversized labels.
+  await assert.rejects(pc.subscribe({ address: BOB, channel: { telegram: true }, signMessage, appLabel: "a".repeat(41) }), { status: 400 });
+  await assert.rejects(pc.subscribe({ address: BOB, channel: { telegram: true }, signMessage, appLabel: "mañana" }), { status: 400 }); // non-ASCII
+  await assert.rejects(pc.subscribe({ address: BOB, channel: { telegram: true }, signMessage, appLabel: 42 }), { status: 400 });
+
+  // A valid label is stored and echoed back.
+  const withLabel = await pc.subscribe({ address: BOB, channel: { telegram: true }, signMessage, appLabel: "  mi-app  " });
+  assert.equal(withLabel.appLabel, "mi-app"); // trimmed
+  assert.equal(store.get(withLabel.id).app_label, "mi-app");
+
+  // Before any delivery, the app doesn't count yet.
+  assert.deepEqual(store.stats(), { appsIntegrated: 0, subscriptions: 2, notificationsSent: 0 });
+
+  // One sent delivery makes the appLabel count; a second subscription with the
+  // SAME label does not double-count it.
+  store.claimDelivery("ev1", withLabel.id);
+  store.finishDelivery("ev1", withLabel.id, "sent", 1);
+  const second = await pc.subscribe({ address: ALICE, channel: { telegram: true }, appLabel: "mi-app", signMessage: (m) => ALICE_KEY.signMessage(m) });
+  assert.deepEqual(store.stats(), { appsIntegrated: 1, subscriptions: 3, notificationsSent: 1 });
+
+  // A different app with a failed (not sent) delivery doesn't count.
+  const other = await pc.subscribe({ address: ALICE, channel: { telegram: true }, appLabel: "otra-app", signMessage: (m) => ALICE_KEY.signMessage(m) });
+  store.claimDelivery("ev2", other.id);
+  store.finishDelivery("ev2", other.id, "failed", 3);
+  assert.deepEqual(store.stats(), { appsIntegrated: 1, subscriptions: 4, notificationsSent: 1 });
+
+  // A third distinct app with a sent delivery reaches the 9-oct criterion (>= 3).
+  const third = await pc.subscribe({ address: ALICE, channel: { telegram: true }, appLabel: "tercera-app", signMessage: (m) => ALICE_KEY.signMessage(m) });
+  store.claimDelivery("ev3", third.id);
+  store.finishDelivery("ev3", third.id, "sent", 1);
+  assert.equal(store.stats().appsIntegrated, 2); // "otra-app" still has no sent delivery
+
+  server.close();
+});
+
+test("GET /v1/subscriptions/stats is aggregate-only (no labels, addresses or secrets) and never matches :id", async () => {
+  const { store, server, url } = await apiServer();
+  const sub = store.create({ address: BOB, events: ["payment.received"], channel: "telegram", appLabel: "visible-app" });
+  store.linkTelegram(sub.telegramLinkToken, 1);
+  store.claimDelivery("evX", sub.id);
+  store.finishDelivery("evX", sub.id, "sent", 1);
+
+  const res = await fetch(`${url}/v1/subscriptions/stats`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.deepEqual(body, { appsIntegrated: 1, subscriptions: 1, notificationsSent: 1 });
+  assert.equal(JSON.stringify(body).includes("visible-app"), false);
+  assert.equal(JSON.stringify(body).includes(BOB), false);
   server.close();
 });

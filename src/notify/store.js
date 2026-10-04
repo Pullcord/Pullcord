@@ -22,6 +22,7 @@ export function openStore(path = ":memory:") {
       telegram_link_token TEXT UNIQUE,
       manage_token_hash TEXT NOT NULL,
       ownership_proof TEXT NOT NULL DEFAULT 'none', -- 'sep53' | 'none'
+      app_label TEXT,                    -- optional, short, no personal data (see routes.js)
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS subscriptions_address ON subscriptions(address);
@@ -42,10 +43,15 @@ export function openStore(path = ":memory:") {
       expires_at INTEGER NOT NULL
     );
   `);
-  try {
-    db.exec("ALTER TABLE subscriptions ADD COLUMN ownership_proof TEXT NOT NULL DEFAULT 'none'");
-  } catch {
-    // column already exists
+  for (const migration of [
+    "ALTER TABLE subscriptions ADD COLUMN ownership_proof TEXT NOT NULL DEFAULT 'none'",
+    "ALTER TABLE subscriptions ADD COLUMN app_label TEXT",
+  ]) {
+    try {
+      db.exec(migration);
+    } catch {
+      // column already exists
+    }
   }
 
   const now = () => new Date().toISOString();
@@ -55,15 +61,15 @@ export function openStore(path = ":memory:") {
     db,
 
     // Returns the subscription plus the secrets shown once to the caller.
-    create({ address, events, channel, webhookUrl = null, ownershipProof = "none" }) {
+    create({ address, events, channel, webhookUrl = null, ownershipProof = "none", appLabel = null }) {
       const id = randomUUID();
       const manageToken = token();
       const webhookSecret = channel === "webhook" ? token(32) : null;
       const telegramLinkToken = channel === "telegram" ? token(16) : null;
       db.prepare(
-        `INSERT INTO subscriptions (id, address, events, channel, webhook_url, webhook_secret, telegram_link_token, manage_token_hash, ownership_proof, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(id, address, JSON.stringify(events), channel, webhookUrl, webhookSecret, telegramLinkToken, hash(manageToken), ownershipProof, now());
+        `INSERT INTO subscriptions (id, address, events, channel, webhook_url, webhook_secret, telegram_link_token, manage_token_hash, ownership_proof, app_label, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(id, address, JSON.stringify(events), channel, webhookUrl, webhookSecret, telegramLinkToken, hash(manageToken), ownershipProof, appLabel, now());
       return { ...this.get(id), manageToken, webhookSecret, telegramLinkToken };
     },
 
@@ -127,6 +133,22 @@ export function openStore(path = ":memory:") {
       if (!c) return null;
       db.prepare("DELETE FROM challenges WHERE nonce = ?").run(c.nonce);
       return c.expires_at >= Date.now() ? c : null;
+    },
+
+    // Aggregate-only counts for the demo: no labels, addresses or secrets.
+    // An "integrated app" is a distinct appLabel with at least one 'sent'
+    // delivery — the 9-oct criterion (>= 3), not just a subscription attempt.
+    stats() {
+      const appsIntegrated = db
+        .prepare(
+          `SELECT COUNT(DISTINCT s.app_label) AS n FROM subscriptions s
+           JOIN deliveries d ON d.subscription_id = s.id
+           WHERE d.status = 'sent' AND s.app_label IS NOT NULL AND s.app_label != ''`,
+        )
+        .get().n;
+      const subscriptions = db.prepare("SELECT COUNT(*) AS n FROM subscriptions").get().n;
+      const notificationsSent = db.prepare("SELECT COUNT(*) AS n FROM deliveries WHERE status = 'sent'").get().n;
+      return { appsIntegrated, subscriptions, notificationsSent };
     },
 
     getState(key) {

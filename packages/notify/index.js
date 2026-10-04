@@ -34,15 +34,18 @@ export class Pullcord {
   // channel: { webhook: "https://..." } or { telegram: true }.
   // signMessage: (message) => signature. Required for G addresses: the user's
   // wallet signs a one-time challenge (SEP-53) to prove it owns the address.
+  // appLabel: optional, short name of YOUR app (max 40 chars, no personal
+  // data) — used only to count integrated apps, never shown publicly with
+  // any address or secret.
   // Returns { id, secret?, telegramLink?, manageToken }. Secrets are shown once: store them.
-  async subscribe({ address, contract, events = ["payment.received"], channel, signMessage }) {
+  async subscribe({ address, contract, events = ["payment.received"], channel, signMessage, appLabel }) {
     let proof;
     if (typeof address === "string" && address.startsWith("G")) {
       if (typeof signMessage !== "function") throw new Error("Pullcord: signMessage is required for G addresses (SEP-53)");
       const challenge = await this.#request("POST", "/v1/subscriptions/challenge", { body: { address } });
       proof = { nonce: challenge.nonce, signature: encodeSignature(await signMessage(challenge.message)) };
     }
-    return this.#request("POST", "/v1/subscriptions", { body: { address, contract, events, channel, proof } });
+    return this.#request("POST", "/v1/subscriptions", { body: { address, contract, events, channel, proof, appLabel } });
   }
 
   get(id, manageToken) {
