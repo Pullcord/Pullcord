@@ -111,10 +111,7 @@ amplía la cobertura pero no cambia si el producto ya es útil hoy.
 
 ## 6. Backlog priorizado (Kanban)
 
-**Enlace al tablero (obligatorio):** *(pendiente — crear el tablero y
-pegar aquí su URL real, por ejemplo
-`https://github.com/orgs/Pullcord/projects/1`. Pasos y tarjetas listas
-para copiar, fuera de este documento.)*
+**Enlace al tablero (obligatorio):** [Tablero Kanban en GitHub Projects](https://github.com/orgs/Pullcord/projects/1/views/1)
 
 ---
 
