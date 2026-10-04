@@ -8,33 +8,47 @@ Este repo es **público**. Aquí solo van reglas y hechos del proyecto.
 
 ## Qué es Pullcord
 
-Mapa público de los poderes privilegiados de protocolos DeFi en Stellar: quién
-es el admin de cada contrato, si es una sola llave o un multisig (y su umbral),
-si el contrato se puede actualizar o pausar, si usa un executable externo, y
-alertas cuando cambia el código (wasm) o el admin. Solo hechos, cada uno con
-link a su fuente. Nunca una calificación, nunca una auditoría, nunca consejo de
-inversión.
+Capa de notificaciones para cualquier app de Stellar. La app integra un
+paquete chico y avisa a sus propios usuarios cuando reciben un pago, cuando un
+contrato emite un evento o cuando cambia el código (wasm) o el admin de un
+contrato. El usuario se suscribe con su wallet. Pullcord solo avisa: nunca
+firma, nunca mueve fondos, nunca ejecuta nada por el usuario. Tampoco califica,
+audita ni da consejo de inversión.
 
-MVP:
-1. Motor de lectura de solo lectura para DeFindex, Soroswap y Trustless Work,
-   más los admins de los contratos de USDC y EURC.
-2. Registro en Soroban (testnet) donde el protocolo declara sus roles, para
-   comparar lo declarado contra lo que hay en la cadena.
-3. Alertas por cambio de wasm o de admin.
-4. API JSON para que otras apps lo muestren.
-5. Cobro por consulta de la API con x402 (pago por llamada). Una parte de la
-   API queda gratis para humanos e integradores básicos; la consulta para
-   agentes y de alto volumen se paga. Se usa un middleware estándar (`@x402/express`
+MVP (alcance ampliado el 2026-10-04; lo ya construido se conserva):
+1. Fuentes de eventos, todas por `getEvents` de Stellar RPC:
+   a) pagos recibidos en una dirección G o C, de cualquier activo (eventos
+      `transfer` unificados de CAP-67, Protocol 23);
+   b) eventos de un contrato específico, filtrados por topics;
+   c) cambio de wasm o de admin de un contrato (lo lee el motor de solo
+      lectura ya construido). Es una función genérica: no se publican lecturas
+      de protocolos de terceros.
+2. Canales: webhook firmado con HMAC y bot de Telegram. Email después.
+3. Paquete `@pullcord/notify` con `subscribe({ address | contract, events, channel })`.
+   Integrarlo toma menos de 10 minutos, con un ejemplo de 15 líneas. Sin
+   publicar en npm hasta decidirlo.
+4. Registro de suscripciones en Soroban (testnet): el usuario se suscribe
+   firmando con su wallet (prueba de propiedad y de consentimiento) y se da de
+   baja on-chain. Cero datos personales on-chain.
+5. Cobro con x402: gratis hasta cierto volumen; el tier de agentes y de alto
+   volumen se paga por llamada. Se usa un middleware estándar (`@x402/express`
    o el oficial que corresponda) y un facilitador existente: no se construye un
-   facilitador y no se depende de ningún otro proyecto. El
-   facilitador se acepta solo con evidencia de un pago liquidado, no con un
-   reto 402. En el bootcamp, solo testnet. En mainnet, el cobro llega solo a
-   una wallet propia de Pullcord; nada es custodial.
+   facilitador y no se depende de ningún otro proyecto. El facilitador se
+   acepta solo con evidencia de un pago liquidado, no con un reto 402. En el
+   bootcamp, solo testnet. En mainnet, el cobro llega solo a una wallet propia
+   de Pullcord; nada es custodial.
+
+Datos personales (chat ID de Telegram, URL de webhook, email): viven fuera de
+la cadena, el usuario puede borrarlos y el README lleva un aviso de
+privacidad. Hosting: nada en Fly.
 
 ## Reglas duras
 
 **No custodial, siempre.** Pullcord nunca custodia fondos ni sostiene una llave
 que pueda moverlos. El motor del MVP es de solo lectura.
+
+**Solo avisa, nunca ejecuta.** Nada de auto-pagar, auto-retirar ni acciones
+disparadas por un aviso. Ejecutar por el usuario reabre custodia.
 
 **Nunca "SDK" ni "Developer" en el nombre, título o descripción pública.**
 Nombra la capacidad, no la categoría técnica.
