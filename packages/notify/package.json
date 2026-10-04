@@ -1,0 +1,16 @@
+{
+  "name": "@pullcord/notify",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Notify your app's users when something happens on Stellar: payments received, with signed webhooks and Telegram.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./signature": "./signature.js"
+  },
+  "files": ["index.js", "signature.js", "README.md"],
+  "engines": {
+    "node": ">=20"
+  }
+}

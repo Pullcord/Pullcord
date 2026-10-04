@@ -12,6 +12,18 @@ export function loadConfig(env = process.env) {
     payTo: env.PULLCORD_PAY_TO || "",
     price: env.PULLCORD_PRICE || "$0.01",
     port: Number(env.PORT || 8080),
+    // Notifications. Testnet by default: the bootcamp runs on testnet only.
+    notifyRpcUrl: env.PULLCORD_NOTIFY_RPC_URL || "https://soroban-testnet.stellar.org",
+    notifyNetwork: env.PULLCORD_NOTIFY_NETWORK || "testnet",
+    notifyExplorerBase: env.PULLCORD_NOTIFY_EXPLORER_BASE || "https://stellar.expert/explorer/testnet",
+    dbPath: env.PULLCORD_DB_PATH || "pullcord.db",
+    telegramBotToken: env.PULLCORD_TELEGRAM_BOT_TOKEN || "",
+    watcherEnabled: env.PULLCORD_WATCHER !== "off",
+    pollIntervalMs: Number(env.PULLCORD_POLL_INTERVAL_MS || 5000),
+    pageLimit: Number(env.PULLCORD_PAGE_LIMIT || 1000),
+    maxPagesPerPoll: Number(env.PULLCORD_MAX_PAGES_PER_POLL || 20),
+    // Local testing only: allows http:// and private hosts as webhook targets.
+    allowHttpWebhooks: env.PULLCORD_ALLOW_HTTP_WEBHOOKS === "1",
   };
 }
 

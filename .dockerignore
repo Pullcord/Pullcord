@@ -1,0 +1,13 @@
+# Only what the image needs. Local-only material and secrets never enter it.
+node_modules
+.git
+.claude
+playbooks
+test
+examples
+.env
+.env.*
+*.key
+*.db
+*.db-wal
+*.db-shm

@@ -9,3 +9,8 @@ playbooks/
 *.key
 target/
 node_modules/
+
+# Local subscription database (holds personal data: chat IDs, webhook URLs)
+*.db
+*.db-wal
+*.db-shm

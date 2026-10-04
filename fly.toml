@@ -1,0 +1,43 @@
+# Pullcord notification service on Fly.io.
+# The app is created in its own Fly organization for Pullcord (see README,
+# "Desplegar"). Secrets are set with `fly secrets set`, never in this file.
+
+app = "pullcord-notify"
+primary_region = "dfw"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  PULLCORD_DB_PATH = "/data/pullcord.db"
+  PULLCORD_NOTIFY_NETWORK = "testnet"
+  PULLCORD_NOTIFY_RPC_URL = "https://soroban-testnet.stellar.org"
+  PULLCORD_NOTIFY_EXPLORER_BASE = "https://stellar.expert/explorer/testnet"
+
+# SQLite lives on this volume. Exactly one Machine: the watcher is a single
+# listener, and a second Machine would get its own volume and its own
+# subscriptions. Do not scale above 1.
+[mounts]
+  source = "pullcord_data"
+  destination = "/data"
+  initial_size = "1gb"
+
+# Always on: the watcher polls RPC continuously, so the Machine never stops.
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "15s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

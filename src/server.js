@@ -2,6 +2,10 @@ import express from "express";
 import { loadConfig, paidRouteEnabled } from "./config.js";
 import { REGISTRY, findContract } from "./registry.js";
 import { buildReport } from "./read.js";
+import { subscriptionRoutes } from "./notify/routes.js";
+import { openStore } from "./notify/store.js";
+import { startWatcher } from "./notify/watcher.js";
+import { startTelegram, getBotUsername } from "./notify/telegram.js";
 
 // Builds the HTTP app. `deps` lets tests inject fetch; production uses global fetch.
 export async function createApp(config = loadConfig(), deps = {}) {
@@ -19,12 +23,20 @@ export async function createApp(config = loadConfig(), deps = {}) {
     }
   };
 
+  // Health check for the host (fly.toml). No network calls.
+  app.get("/healthz", (_req, res) => res.json({ ok: true }));
+
   app.get("/v1/contracts", (_req, res) => {
     res.json({ contracts: REGISTRY.map((c) => ({ id: c.id, protocol: c.protocol, role: c.role, contractId: c.contractId, source: c.source })) });
   });
 
   // Free route.
   app.get("/v1/contracts/:id", readContract);
+
+  // Notifications. Mounted only when a subscription store is provided.
+  if (deps.store) {
+    app.use("/v1/subscriptions", subscriptionRoutes(config, { store: deps.store, telegramUsername: deps.telegramUsername }));
+  }
 
   // Paid route (x402). Enabled only when the facilitator and pay-to wallet are configured.
   if (paidRouteEnabled(config)) {
@@ -54,6 +66,15 @@ export async function createApp(config = loadConfig(), deps = {}) {
 // Entry point: node src/server.js
 if (import.meta.url === `file://${process.argv[1]}`) {
   const config = loadConfig();
-  const app = await createApp(config);
-  app.listen(config.port, () => console.log(`pullcord api on :${config.port} (paid route: ${paidRouteEnabled(config) ? "on" : "off"})`));
+  const store = openStore(config.dbPath);
+  const telegramUsername = config.telegramBotToken ? await getBotUsername(config.telegramBotToken) : null;
+  const app = await createApp(config, { store, telegramUsername });
+  app.listen(config.port, () =>
+    console.log(
+      `pullcord api on :${config.port} (paid route: ${paidRouteEnabled(config) ? "on" : "off"}, ` +
+        `notify: ${config.notifyNetwork}, watcher: ${config.watcherEnabled ? "on" : "off"}, telegram: ${telegramUsername ? "@" + telegramUsername : "off"})`,
+    ),
+  );
+  if (config.watcherEnabled) startWatcher(config, { store });
+  if (telegramUsername) startTelegram(config, { store });
 }
