@@ -1,11 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { nativeToScVal, Address } from "@stellar/stellar-sdk";
+import { nativeToScVal, Address, Keypair } from "@stellar/stellar-sdk";
 import { decodeTransfer, formatAmount } from "../src/notify/events.js";
 import { openStore } from "../src/notify/store.js";
 import { pollOnce } from "../src/notify/watcher.js";
 import { checkWebhookUrl } from "../src/notify/routes.js";
+import { isBlockedIp, safePost, assertPublicHost } from "../src/notify/ssrf.js";
+import { postWebhook } from "../src/notify/dispatch.js";
 import { handleUpdate } from "../src/notify/telegram.js";
 import { createApp } from "../src/server.js";
 import { loadConfig } from "../src/config.js";
@@ -15,6 +17,7 @@ import { accountFromSeed, contractIdFromSeed } from "./helpers.js";
 
 const ALICE = accountFromSeed(11);
 const BOB = accountFromSeed(12);
+const BOB_KEY = Keypair.fromRawEd25519Seed(Buffer.alloc(32, 12)); // synthetic; BOB_KEY.publicKey() === BOB
 const SAC = contractIdFromSeed(20);
 
 // Synthetic RPC event shaped like CAP-67 `transfer`.
@@ -81,14 +84,6 @@ test("signature verifies, and rejects tampering, wrong secret and stale timestam
   const old = sign("s3cret", body, Math.floor(Date.now() / 1000) - 3600);
   assert.equal(verify({ "pullcord-signature": old }, body, "s3cret"), false);
   assert.equal(verify({}, body, "s3cret"), false);
-});
-
-test("webhook URLs: https only, no internal hosts", () => {
-  assert.equal(checkWebhookUrl("https://app.example/hook"), null);
-  assert.ok(checkWebhookUrl("http://app.example/hook"));
-  for (const u of ["https://localhost/x", "https://127.0.0.1/x", "https://10.0.0.5/x", "https://192.168.1.1/x", "https://169.254.169.254/x", "https://[::1]/x", "https://svc.railway.internal/x"]) {
-    assert.ok(checkWebhookUrl(u), u);
-  }
 });
 
 test("store: deleting a subscription removes its personal data", () => {
@@ -166,24 +161,154 @@ test("telegram: /start links the chat, /stop deletes it", async () => {
   assert.equal(store.get(sub.id), null);
 });
 
-test("API and client: subscribe, read, unsubscribe", async () => {
+// --- SSRF -----------------------------------------------------------------
+
+// Fake DNS: maps names to address lists, like dns.lookup(..., { all: true }).
+const fakeDns = (table) => (host, _opts, cb) =>
+  table[host] ? cb(null, table[host].map((address) => ({ address, family: address.includes(":") ? 6 : 4 }))) : cb(Object.assign(new Error("ENOTFOUND"), { code: "ENOTFOUND" }));
+
+test("ssrf: private, loopback, link-local and metadata addresses are blocked (IPv4 and IPv6)", () => {
+  for (const ip of [
+    "127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1", "0.0.0.0", "224.0.0.1",
+    "::1", "::", "fe80::1", "fc00::1", "fd00:ec2::254", "fdaa::3", "ff02::1",
+    "::ffff:127.0.0.1", "::ffff:7f00:1", "::ffff:a9fe:a9fe", "64:ff9b::a9fe:a9fe",
+  ]) assert.equal(isBlockedIp(ip), true, ip);
+  for (const ip of ["8.8.8.8", "1.1.1.1", "2606:4700:4700::1111", "::ffff:8.8.8.8"]) assert.equal(isBlockedIp(ip), false, ip);
+  assert.equal(isBlockedIp("not-an-ip"), true);
+});
+
+test("ssrf: a domain that resolves to 127.0.0.1 is refused at delivery and never reached", async () => {
+  let hits = 0;
+  const { server } = await listen((req, res) => { hits++; res.writeHead(200).end(); });
+  const port = server.address().port;
+  const resolve = fakeDns({ "evil.example": ["127.0.0.1"] });
+  await assert.rejects(safePost(`http://evil.example:${port}/hook`, { headers: {}, body: "{}", resolve }), { code: "EBLOCKEDHOST" });
+  // Same name through the real delivery path: not retried, recorded as blocked.
+  const r = await postWebhook(`http://evil.example:${port}/hook`, "s", { a: 1 }, { resolve, baseDelayMs: 1 });
+  assert.equal(r.ok, false);
+  assert.equal(r.attempts, 1);
+  assert.match(r.error, /blocked address \(127\.0\.0\.1\)/);
+  // Real DNS: "localhost" resolves to loopback and is refused too.
+  await assert.rejects(safePost(`http://localhost:${port}/hook`, { headers: {}, body: "{}" }), { code: "EBLOCKEDHOST" });
+  // Literal IPs skip DNS and are checked directly.
+  await assert.rejects(safePost(`http://127.0.0.1:${port}/hook`, { headers: {}, body: "{}" }), { code: "EBLOCKEDHOST" });
+  await assert.rejects(safePost(`http://[::1]:${port}/hook`, { headers: {}, body: "{}" }), { code: "EBLOCKEDHOST" });
+  assert.equal(hits, 0);
+  server.close();
+});
+
+test("ssrf: one private address in a multi-address answer blocks the host", async () => {
+  await assert.rejects(assertPublicHost("mixed.example", { resolve: fakeDns({ "mixed.example": ["93.184.215.14", "10.0.0.7"] }) }), { code: "EBLOCKEDHOST" });
+  await assert.doesNotReject(assertPublicHost("ok.example", { resolve: fakeDns({ "ok.example": ["93.184.215.14"] }) }));
+});
+
+test("ssrf: DNS rebinding after subscription is caught at delivery", async () => {
+  let calls = 0;
+  const rebinding = (host, opts, cb) => fakeDns({ [host]: [calls++ === 0 ? "93.184.215.14" : "169.254.169.254"] })(host, opts, cb);
+  assert.equal(await checkWebhookUrl("https://rebind.example/hook", { resolve: rebinding }), null); // public at subscribe time
+  const r = await postWebhook("https://rebind.example/hook", "s", {}, { resolve: rebinding, baseDelayMs: 1 });
+  assert.equal(r.ok, false);
+  assert.match(r.error, /169\.254\.169\.254/);
+});
+
+test("ssrf: redirects are not followed", async () => {
+  let targetHits = 0;
+  const target = await listen((req, res) => { targetHits++; res.writeHead(200).end(); });
+  const redirector = await listen((req, res) => { res.writeHead(302, { Location: `${target.url}/internal` }).end(); });
+  const r = await postWebhook(`${redirector.url}/hook`, "s", {}, { allowPrivate: true, baseDelayMs: 1 });
+  assert.equal(r.ok, false);
+  assert.match(r.error, /redirect not followed/);
+  assert.equal(targetHits, 0);
+  target.server.close();
+  redirector.server.close();
+});
+
+test("ssrf: subscribe-time checks reject internal hosts, IPs and credentials", async () => {
+  const resolve = fakeDns({ "app.example": ["93.184.215.14"], "internal.example": ["10.0.0.5"] });
+  assert.equal(await checkWebhookUrl("https://app.example/hook", { resolve }), null);
+  assert.equal(await checkWebhookUrl("http://app.example/hook", { resolve }), "webhook must use https");
+  assert.equal(await checkWebhookUrl("https://internal.example/hook", { resolve }), "webhook host is not allowed");
+  assert.equal(await checkWebhookUrl("https://user:pw@app.example/hook", { resolve }), "webhook must not contain credentials");
+  for (const u of ["https://127.0.0.1/x", "https://169.254.169.254/x", "https://[::1]/x", "https://[fd00:ec2::254]/x", "https://[::ffff:127.0.0.1]/x"]) {
+    assert.equal(await checkWebhookUrl(u, { resolve }), "webhook host is not allowed", u);
+  }
+  assert.match(await checkWebhookUrl("https://nx.example/hook", { resolve }), /does not resolve/);
+});
+
+// --- Ownership (SEP-53) and API --------------------------------------------
+
+async function apiServer(extraCfg = {}) {
   const store = openStore();
-  const app = await createApp({ ...cfg, rpcUrl: "https://rpc.test" }, { store, telegramUsername: "pullcord_test_bot" });
-  const { server, url } = await new Promise((resolve) => { const s = app.listen(0, "127.0.0.1", () => resolve({ server: s, url: `http://127.0.0.1:${s.address().port}` })); });
-  const pc = new Pullcord({ url });
+  const resolve = fakeDns({ "app.example": ["93.184.215.14"] });
+  const app = await createApp({ ...cfg, allowHttpWebhooks: false, rpcUrl: "https://rpc.test", ...extraCfg }, { store, telegramUsername: "pullcord_test_bot", resolve });
+  const { server, url } = await new Promise((ok) => { const s = app.listen(0, "127.0.0.1", () => ok({ server: s, url: `http://127.0.0.1:${s.address().port}` })); });
+  return { store, server, url, pc: new Pullcord({ url }) };
+}
+const post = (url, path, body) => fetch(`${url}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
-  const hook = await pc.subscribe({ address: BOB, channel: { webhook: "https://app.example/hook" } });
-  assert.ok(hook.secret && hook.manageToken);
-  const tg = await pc.subscribe({ address: SAC, channel: { telegram: true } });
-  assert.match(tg.telegramLink, /^https:\/\/t\.me\/pullcord_test_bot\?start=/);
-  assert.equal(tg.secret, undefined);
+test("ownership: a G subscription needs a valid SEP-53 signature over a fresh, single-use challenge", async () => {
+  const { store, server, url, pc } = await apiServer();
+  const channel = { webhook: "https://app.example/hook" };
 
+  // No proof: rejected.
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel })).status, 401);
+  // Client without signMessage refuses before calling the API.
+  await assert.rejects(pc.subscribe({ address: BOB, channel }), /signMessage is required/);
+
+  // Valid proof.
+  const sub = await pc.subscribe({ address: BOB, channel, signMessage: (m) => BOB_KEY.signMessage(m) });
+  assert.equal(sub.ownershipProof, "sep53");
+  assert.ok(sub.secret && sub.manageToken);
+
+  // Signed by another key: rejected.
+  const c1 = await (await post(url, "/v1/subscriptions/challenge", { address: BOB })).json();
+  assert.match(c1.message, /does not move funds/);
+  const wrong = Keypair.random().signMessage(c1.message).toString("base64");
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel, proof: { nonce: c1.nonce, signature: wrong } })).status, 401);
+  // The nonce was consumed by the failed attempt: the right signature no longer works.
+  const right = BOB_KEY.signMessage(c1.message).toString("base64");
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel, proof: { nonce: c1.nonce, signature: right } })).status, 401);
+
+  // A challenge for one address cannot be used for another.
+  const c2 = await (await post(url, "/v1/subscriptions/challenge", { address: ALICE })).json();
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel, proof: { nonce: c2.nonce, signature: BOB_KEY.signMessage(c2.message).toString("base64") } })).status, 401);
+
+  // Expired challenge.
+  const c3 = await (await post(url, "/v1/subscriptions/challenge", { address: BOB })).json();
+  store.db.prepare("UPDATE challenges SET expires_at = 0 WHERE nonce = ?").run(c3.nonce);
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel, proof: { nonce: c3.nonce, signature: BOB_KEY.signMessage(c3.message).toString("hex") } })).status, 401);
+
+  // Replay of a nonce that already succeeded.
+  const c4 = await (await post(url, "/v1/subscriptions/challenge", { address: BOB })).json();
+  const proof = { nonce: c4.nonce, signature: BOB_KEY.signMessage(c4.message).toString("base64") };
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel, proof })).status, 201);
+  assert.equal((await post(url, "/v1/subscriptions", { address: BOB, channel, proof })).status, 401);
+  server.close();
+});
+
+test("ownership: C addresses are testnet-only and marked unverified; refused on other networks", async () => {
+  const t = await apiServer();
+  const sub = await t.pc.subscribe({ address: SAC, channel: { telegram: true } });
+  assert.equal(sub.ownershipProof, "none");
+  assert.match(sub.warning, /testnet only/);
+  assert.match(sub.telegramLink, /^https:\/\/t\.me\/pullcord_test_bot\?start=/);
+  t.server.close();
+
+  const m = await apiServer({ notifyNetwork: "mainnet" });
+  await assert.rejects(m.pc.subscribe({ address: SAC, channel: { telegram: true } }), { status: 403 });
+  m.server.close();
+});
+
+test("API and client: read, validation errors, unsubscribe", async () => {
+  const { store, server, pc } = await apiServer();
+  const signMessage = (m) => BOB_KEY.signMessage(m);
+  const hook = await pc.subscribe({ address: BOB, channel: { webhook: "https://app.example/hook" }, signMessage });
   assert.equal((await pc.get(hook.id, hook.manageToken)).address, BOB);
   await assert.rejects(pc.get(hook.id, "wrong"), { status: 404 });
-  await assert.rejects(pc.subscribe({ address: "GNOTVALID", channel: { telegram: true } }), { status: 400 });
+  await assert.rejects(pc.subscribe({ address: "XNOTVALID", channel: { telegram: true } }), { status: 400 });
   await assert.rejects(pc.subscribe({ contract: SAC, channel: { telegram: true } }), { status: 501 });
-  await assert.rejects(pc.subscribe({ address: BOB, events: ["anything"], channel: { telegram: true } }), { status: 400 });
-
+  await assert.rejects(pc.subscribe({ address: SAC, events: ["anything"], channel: { telegram: true } }), { status: 400 });
+  await assert.rejects(pc.subscribe({ address: BOB, channel: { webhook: "https://127.0.0.1/x" }, signMessage }), { status: 400 });
   await pc.unsubscribe(hook.id, hook.manageToken);
   assert.equal(store.get(hook.id), null);
   server.close();

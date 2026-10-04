@@ -21,6 +21,7 @@ export function openStore(path = ":memory:") {
       telegram_chat_id TEXT,
       telegram_link_token TEXT UNIQUE,
       manage_token_hash TEXT NOT NULL,
+      ownership_proof TEXT NOT NULL DEFAULT 'none', -- 'sep53' | 'none'
       created_at TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS subscriptions_address ON subscriptions(address);
@@ -33,7 +34,19 @@ export function openStore(path = ":memory:") {
       PRIMARY KEY (event_id, subscription_id)
     );
     CREATE TABLE IF NOT EXISTS state (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+    -- One-time nonces for SEP-53 ownership proofs.
+    CREATE TABLE IF NOT EXISTS challenges (
+      nonce TEXT PRIMARY KEY,
+      address TEXT NOT NULL,
+      message TEXT NOT NULL,
+      expires_at INTEGER NOT NULL
+    );
   `);
+  try {
+    db.exec("ALTER TABLE subscriptions ADD COLUMN ownership_proof TEXT NOT NULL DEFAULT 'none'");
+  } catch {
+    // column already exists
+  }
 
   const now = () => new Date().toISOString();
   const row = (r) => (r ? { ...r, events: JSON.parse(r.events) } : null);
@@ -42,15 +55,15 @@ export function openStore(path = ":memory:") {
     db,
 
     // Returns the subscription plus the secrets shown once to the caller.
-    create({ address, events, channel, webhookUrl = null }) {
+    create({ address, events, channel, webhookUrl = null, ownershipProof = "none" }) {
       const id = randomUUID();
       const manageToken = token();
       const webhookSecret = channel === "webhook" ? token(32) : null;
       const telegramLinkToken = channel === "telegram" ? token(16) : null;
       db.prepare(
-        `INSERT INTO subscriptions (id, address, events, channel, webhook_url, webhook_secret, telegram_link_token, manage_token_hash, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(id, address, JSON.stringify(events), channel, webhookUrl, webhookSecret, telegramLinkToken, hash(manageToken), now());
+        `INSERT INTO subscriptions (id, address, events, channel, webhook_url, webhook_secret, telegram_link_token, manage_token_hash, ownership_proof, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(id, address, JSON.stringify(events), channel, webhookUrl, webhookSecret, telegramLinkToken, hash(manageToken), ownershipProof, now());
       return { ...this.get(id), manageToken, webhookSecret, telegramLinkToken };
     },
 
@@ -101,6 +114,19 @@ export function openStore(path = ":memory:") {
       db.prepare("UPDATE deliveries SET status = ?, attempts = ?, updated_at = ? WHERE event_id = ? AND subscription_id = ?").run(
         status, attempts, now(), eventId, subscriptionId,
       );
+    },
+
+    saveChallenge({ nonce, address, message, expiresAt }) {
+      db.prepare("DELETE FROM challenges WHERE expires_at < ?").run(Date.now());
+      db.prepare("INSERT INTO challenges (nonce, address, message, expires_at) VALUES (?, ?, ?, ?)").run(nonce, address, message, expiresAt);
+    },
+
+    // Single use: the challenge is deleted whether or not the caller's signature verifies.
+    takeChallenge(nonce, address) {
+      const c = db.prepare("SELECT * FROM challenges WHERE nonce = ? AND address = ?").get(String(nonce), address);
+      if (!c) return null;
+      db.prepare("DELETE FROM challenges WHERE nonce = ?").run(c.nonce);
+      return c.expires_at >= Date.now() ? c : null;
     },
 
     getState(key) {

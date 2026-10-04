@@ -2,6 +2,7 @@
 // signs or submits a transaction.
 import { sign, SIGNATURE_HEADER } from "../../packages/notify/signature.js";
 import { formatAmount, assetCode } from "./events.js";
+import { safePost } from "./ssrf.js";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const short = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
@@ -40,23 +41,27 @@ export function telegramText(payload) {
   ].join("\n");
 }
 
-export async function postWebhook(url, secret, payload, { fetchImpl = fetch, attempts = 3, baseDelayMs = 1000, timeoutMs = 10_000 } = {}) {
+// Delivery goes through safePost: DNS is checked at connect time and
+// redirects are not followed (see ssrf.js).
+export async function postWebhook(url, secret, payload, { attempts = 3, baseDelayMs = 1000, timeoutMs = 10_000, allowPrivate = false, resolve } = {}) {
   const body = JSON.stringify(payload);
   let lastError = null;
   for (let i = 1; i <= attempts; i++) {
     try {
-      const res = await fetchImpl(url, {
-        method: "POST",
+      const res = await safePost(url, {
         headers: { "Content-Type": "application/json", [SIGNATURE_HEADER]: sign(secret, body), "User-Agent": "pullcord-notify" },
         body,
-        redirect: "manual",
-        signal: AbortSignal.timeout(timeoutMs),
+        timeoutMs,
+        allowPrivate,
+        resolve,
       });
       if (res.status >= 200 && res.status < 300) return { ok: true, attempts: i };
+      if (res.status >= 300 && res.status < 400) return { ok: false, attempts: i, error: `redirect not followed (HTTP ${res.status})` };
       lastError = `HTTP ${res.status}`;
       if (res.status >= 400 && res.status < 500 && res.status !== 429) break; // receiver rejected it; retrying will not help
     } catch (err) {
       lastError = err.message;
+      if (err.code === "EBLOCKEDHOST") return { ok: false, attempts: i, error: err.message }; // blocked hosts are never retried
     }
     if (i < attempts) await sleep(baseDelayMs * 2 ** (i - 1));
   }
@@ -78,7 +83,7 @@ export async function deliver(sub, transfer, cfg, { store, fetchImpl = fetch, re
   const payload = paymentPayload(sub, transfer, cfg);
   const result =
     sub.channel === "webhook"
-      ? await postWebhook(sub.webhook_url, sub.webhook_secret, payload, { fetchImpl, baseDelayMs: retryDelayMs })
+      ? await postWebhook(sub.webhook_url, sub.webhook_secret, payload, { baseDelayMs: retryDelayMs, allowPrivate: cfg.allowHttpWebhooks })
       : await sendTelegram(cfg.telegramBotToken, sub.telegram_chat_id, telegramText(payload), { fetchImpl });
   store.finishDelivery(transfer.id, sub.id, result.ok ? "sent" : "failed", result.attempts);
   return result;

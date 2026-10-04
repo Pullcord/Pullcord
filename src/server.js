@@ -35,7 +35,7 @@ export async function createApp(config = loadConfig(), deps = {}) {
 
   // Notifications. Mounted only when a subscription store is provided.
   if (deps.store) {
-    app.use("/v1/subscriptions", subscriptionRoutes(config, { store: deps.store, telegramUsername: deps.telegramUsername }));
+    app.use("/v1/subscriptions", subscriptionRoutes(config, { store: deps.store, telegramUsername: deps.telegramUsername, resolve: deps.resolve }));
   }
 
   // Paid route (x402). Enabled only when the facilitator and pay-to wallet are configured.

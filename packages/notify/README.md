@@ -14,13 +14,23 @@ import { Pullcord } from "@pullcord/notify";
 const pullcord = new Pullcord({ url: process.env.PULLCORD_URL });
 
 const sub = await pullcord.subscribe({
-  address: "G...",                 // o C... (testnet)
+  address: "G...",
   events: ["payment.received"],
   channel: { webhook: "https://tu-app.example/pullcord" }, // o { telegram: true }
+  signMessage: (message) => wallet.signMessage(message),  // SEP-53, con la wallet del usuario
 });
 // sub.secret: secreto HMAC del webhook. sub.telegramLink: enlace para el bot.
 // sub.manageToken: para leer o borrar la suscripción. Se muestran una sola vez.
 ```
+
+Para una dirección G, el paquete pide un reto al servidor, la wallet lo firma
+con SEP-53 y el servidor verifica la firma. El mensaje dice que la firma no
+mueve fondos. Cada reto sirve una sola vez y vence en 10 minutos.
+`signMessage` puede devolver bytes, base64, hex o un objeto con
+`signedMessage`.
+
+Las direcciones C no pueden firmar SEP-53: se aceptan solo en testnet, sin
+`signMessage`, y la respuesta trae `ownershipProof: "none"` y un aviso.
 
 Ejemplo completo: [examples/subscribe.js](../../examples/subscribe.js).
 
