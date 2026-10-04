@@ -23,7 +23,8 @@ MVP (alcance ampliado el 2026-10-04; lo ya construido se conserva):
    c) cambio de wasm o de admin de un contrato (lo lee el motor de solo
       lectura ya construido). Es una función genérica: no se publican lecturas
       de protocolos de terceros.
-2. Canales: webhook firmado con HMAC y bot de Telegram. Email después.
+2. Canales: webhook firmado con HMAC y bot de Telegram para el usuario final.
+   WhatsApp y email después.
 3. Paquete `@pullcord/notify` con `subscribe({ address | contract, events, channel })`.
    Integrarlo toma menos de 10 minutos, con un ejemplo de 15 líneas. Sin
    publicar en npm hasta decidirlo.
@@ -40,7 +41,8 @@ MVP (alcance ampliado el 2026-10-04; lo ya construido se conserva):
 
 Datos personales (chat ID de Telegram, URL de webhook, email): viven fuera de
 la cadena, el usuario puede borrarlos y el README lleva un aviso de
-privacidad. Hosting: nada en Fly.
+privacidad. Hosting: Fly.io, en una organización de Fly propia de Pullcord,
+1 máquina siempre encendida con volumen; los secretos solo con `fly secrets set`.
 
 ## Reglas duras
 
