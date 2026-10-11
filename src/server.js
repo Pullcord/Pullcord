@@ -1,4 +1,5 @@
 import express from "express";
+import { pathToFileURL } from "node:url";
 import { loadConfig, paidRouteEnabled } from "./config.js";
 import { REGISTRY, findContract } from "./registry.js";
 import { buildReport } from "./read.js";
@@ -64,7 +65,7 @@ export async function createApp(config = loadConfig(), deps = {}) {
 }
 
 // Entry point: node src/server.js
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const config = loadConfig();
   const store = openStore(config.dbPath);
   const telegramUsername = config.telegramBotToken ? await getBotUsername(config.telegramBotToken) : null;
