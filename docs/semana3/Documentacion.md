@@ -36,5 +36,49 @@ confirmar la suscripción— corre de punta a punta en testnet.
 
 ## 4. Evidencia
 
-Pendiente: capturas del flujo con Freighter y hash de la transacción de
-prueba en testnet, verificado contra Stellar RPC.
+Prueba de punta a punta en testnet: suscripción creada desde el frontend con
+firma real de Freighter (SEP-53), pago recibido y aviso entregado.
+
+- **Transacción:** [`ca6fcebe0260a8808c4cc9111effb9caaee52f0c6e6ff6d929727df6ca4259dc`](https://stellar.expert/explorer/testnet/tx/ca6fcebe0260a8808c4cc9111effb9caaee52f0c6e6ff6d929727df6ca4259dc)
+  — verificada en Horizon testnet: `successful: true`, ledger `5147862`,
+  `2026-10-11T23:54:57Z`. Pago de 10 XLM nativo de
+  `GC7FWETCRCBY4UC4XNLE3WD5X25EPHUKRKUJZ2XHVBJN7RGHTHZDTJ5Y` a
+  `GDLFNDFU2PN3ECGKHA5P2PDK46M7LE2HIXJ6YLWB4FF4EKYMUJUDJTPF`.
+- **Aviso entregado:** webhook a webhook.site con cabecera
+  `pullcord-signature` y `type: payment.received` para la suscripción
+  `4cf38d12-a9e4-400b-b6b2-8f7707ccdafc` (dirección
+  `GDLFNDFU2PN3ECGKHA5P2PDK46M7LE2HIXJ6YLWB4FF4EKYMUJUDJTPF`), con el mismo
+  `txHash` y ledger verificados arriba. El cuerpo del webhook solo lleva el
+  `subscriptionId` y la dirección pública; nunca el `secret` ni el
+  `manageToken`.
+
+Capturas:
+
+1. [`1-inicio.png`](capturas/1-inicio.png) — pantalla de inicio en una
+   ventana ancha. Muestra el bug de centrado: el contenido queda recargado a
+   la derecha en vez de centrarse.
+2. [`2-suscripcion-lista.png`](capturas/2-suscripcion-lista.png) — paso 4 del
+   asistente, suscripción recién creada (`id`, `secret` del webhook y
+   `manageToken` a la vista; esa suscripción ya se dio de baja, ver
+   Bloqueos).
+3. [`3-vista-previa-y-gestion.png`](capturas/3-vista-previa-y-gestion.png) —
+   vista previa del formato del aviso (Telegram y webhook) y el formulario de
+   gestión de una suscripción por `id` + `manageToken`.
+4. [`4-estadisticas-en-vivo.png`](capturas/4-estadisticas-en-vivo.png) —
+   contadores en vivo de `GET /v1/subscriptions/stats`: 1 app integrada, 2
+   suscripciones, 1 aviso enviado.
+5. [`5-aviso-recibido-webhook.png`](capturas/5-aviso-recibido-webhook.png) —
+   el POST real recibido en webhook.site, con la cabecera
+   `pullcord-signature` y el cuerpo del aviso (`txHash`, ledger, monto,
+   origen y destino).
+
+## 5. Bloqueos
+
+- **Centrado en pantalla ancha** (ver captura 1): el contenido no se centra
+  en viewports anchos. No se arregló a tiempo para esta entrega.
+- La suscripción `8730acec-2c3f-4829-879b-e45905d795e9`, visible con su
+  `secret` y `manageToken` en las capturas 2 y 3, ya se dio de baja antes de
+  publicarlas (verificado: `DELETE` → 204, `GET` posterior → 404), así que
+  ambos quedan inútiles. La suscripción `4cf38d12-a9e4-400b-b6b2-8f7707ccdafc`
+  no muestra su `secret` ni su `manageToken` en ninguna captura, así que
+  queda activa.
