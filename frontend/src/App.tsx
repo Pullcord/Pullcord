@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Footer, Header, TestnetBadge } from "./components/Chrome";
+import { DemoNotice } from "./components/DemoNotice";
 import { Hero } from "./components/Hero";
 import { HowItWorks } from "./components/HowItWorks";
 import { Wizard } from "./components/Wizard";
@@ -14,6 +15,7 @@ export default function App() {
       <a href="#suscribir" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-bg focus:p-2">
         Saltar al flujo de suscripción
       </a>
+      <DemoNotice />
       <Header />
       <TestnetBadge />
       <main>
