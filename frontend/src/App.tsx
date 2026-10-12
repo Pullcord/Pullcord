@@ -15,7 +15,6 @@ export default function App() {
       <a href="#suscribir" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-bg focus:p-2">
         Saltar al flujo de suscripción
       </a>
-      <DemoNotice />
       <Header />
       <TestnetBadge />
       <main>
@@ -26,6 +25,7 @@ export default function App() {
         <Manage />
         <Stats />
       </main>
+      <DemoNotice />
       <Footer />
     </div>
   );

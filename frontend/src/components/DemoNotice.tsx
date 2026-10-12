@@ -22,8 +22,8 @@ export function DemoNotice() {
   return (
     <div
       role="note"
-      className="fixed inset-x-0 top-0 z-30 px-4 py-2 text-center text-sm font-medium"
-      style={{ background: "var(--elevated)", color: "var(--info)", borderBottom: "1px solid var(--border)" }}
+      className="px-4 py-2 text-center text-sm font-medium"
+      style={{ background: "var(--elevated)", color: "var(--info)", borderTop: "1px solid var(--border)" }}
     >
       Vista de demostración: la API no está publicada todavía. Para probar el flujo completo, corre el proyecto en
       local (ver README).
