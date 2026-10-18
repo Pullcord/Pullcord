@@ -21,7 +21,8 @@ export function openStore(path = ":memory:") {
       telegram_chat_id TEXT,
       telegram_link_token TEXT UNIQUE,
       manage_token_hash TEXT NOT NULL,
-      ownership_proof TEXT NOT NULL DEFAULT 'none', -- 'sep53' | 'none'
+      ownership_proof TEXT NOT NULL DEFAULT 'none', -- 'sep53' | 'onchain-consent' | 'none'
+      consent_ref TEXT,                  -- sha256 hex of the on-chain consent reference (no personal data)
       app_label TEXT,                    -- optional, short, no personal data (see routes.js)
       created_at TEXT NOT NULL
     );
@@ -46,6 +47,7 @@ export function openStore(path = ":memory:") {
   for (const migration of [
     "ALTER TABLE subscriptions ADD COLUMN ownership_proof TEXT NOT NULL DEFAULT 'none'",
     "ALTER TABLE subscriptions ADD COLUMN app_label TEXT",
+    "ALTER TABLE subscriptions ADD COLUMN consent_ref TEXT",
   ]) {
     try {
       db.exec(migration);
@@ -61,15 +63,15 @@ export function openStore(path = ":memory:") {
     db,
 
     // Returns the subscription plus the secrets shown once to the caller.
-    create({ address, events, channel, webhookUrl = null, ownershipProof = "none", appLabel = null }) {
+    create({ address, events, channel, webhookUrl = null, ownershipProof = "none", appLabel = null, consentRef = null }) {
       const id = randomUUID();
       const manageToken = token();
       const webhookSecret = channel === "webhook" ? token(32) : null;
       const telegramLinkToken = channel === "telegram" ? token(16) : null;
       db.prepare(
-        `INSERT INTO subscriptions (id, address, events, channel, webhook_url, webhook_secret, telegram_link_token, manage_token_hash, ownership_proof, app_label, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(id, address, JSON.stringify(events), channel, webhookUrl, webhookSecret, telegramLinkToken, hash(manageToken), ownershipProof, appLabel, now());
+        `INSERT INTO subscriptions (id, address, events, channel, webhook_url, webhook_secret, telegram_link_token, manage_token_hash, ownership_proof, app_label, consent_ref, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(id, address, JSON.stringify(events), channel, webhookUrl, webhookSecret, telegramLinkToken, hash(manageToken), ownershipProof, appLabel, consentRef, now());
       return { ...this.get(id), manageToken, webhookSecret, telegramLinkToken };
     },
 

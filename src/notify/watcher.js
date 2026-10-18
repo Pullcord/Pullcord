@@ -4,11 +4,12 @@
 // page, so a restart resumes where it stopped (within RPC's ~7-day retention).
 import { getLatestLedger, getTransferPage } from "./events.js";
 import { deliver } from "./dispatch.js";
+import { makeConsentGate } from "./consent.js";
 
 const CURSOR_KEY = "transfer_cursor";
 
 // Processes pages until caught up. Returns how many transfers matched.
-export async function pollOnce(cfg, { store, fetchImpl = fetch, log = () => {}, retryDelayMs } = {}) {
+export async function pollOnce(cfg, { store, fetchImpl = fetch, log = () => {}, retryDelayMs, consentGate = makeConsentGate(cfg, { fetchImpl, log }) } = {}) {
   let cursor = store.getState(CURSOR_KEY);
   let startLedger = null;
   if (!cursor) {
@@ -24,8 +25,18 @@ export async function pollOnce(cfg, { store, fetchImpl = fetch, log = () => {}, 
     for (const t of res.events) {
       for (const sub of store.byAddress(t.to)) {
         if (!sub.events.includes("payment.received")) continue;
-        matched++;
-        jobs.push(deliver(sub, t, cfg, { store, fetchImpl, retryDelayMs }));
+        jobs.push(
+          consentGate(sub).then((verdict) => {
+            if (verdict === "revoked") {
+              // The owner withdrew consent on chain: stop and delete the personal data.
+              store.delete(sub.id);
+              log(`consent revoked on chain: subscription ${sub.id} deleted`);
+              return { skipped: true };
+            }
+            matched++;
+            return deliver(sub, t, cfg, { store, fetchImpl, retryDelayMs });
+          }),
+        );
       }
     }
     const results = await Promise.allSettled(jobs);
