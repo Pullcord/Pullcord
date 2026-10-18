@@ -47,7 +47,8 @@ const json = (body: unknown): RequestInit => ({
 });
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
 
-export type Challenge = { nonce: string; message: string; expiresAt: string; standard: "SEP-53" };
+export type ConsentRef = { contractId: string; network: string; explorer: string | null; reference: string };
+export type Challenge = { nonce: string; message: string; expiresAt: string; standard: "SEP-53"; consent?: ConsentRef };
 export type Channel = { webhook: string } | { telegram: true };
 export type Subscription = {
   id: string;
@@ -58,6 +59,8 @@ export type Subscription = {
   ownershipProof: string;
   appLabel: string | null;
   createdAt: string | number;
+  /** Solo si la suscripción tiene referencia de consentimiento en cadena. status: null = nunca se registró. */
+  consent?: ConsentRef & { status: "Active" | "Revoked" | null };
 };
 export type Created = Subscription & { secret?: string; telegramLink?: string; manageToken: string; note: string };
 export type Stats = { appsIntegrated: number; subscriptions: number; notificationsSent: number };
