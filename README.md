@@ -10,6 +10,8 @@ Más contexto del proyecto en [docs/PROYECTO.md](docs/PROYECTO.md).
 ## Requisitos
 
 - Node.js 22
+- Para el contrato: Rust con el target `wasm32v1-none` y la CLI de Stellar 27
+  (ver [contracts/consent-registry](contracts/consent-registry/README.md))
 - [Freighter](https://www.freighter.app/) en Testnet, con la cuenta fondeada
   por [Friendbot](https://friendbot.stellar.org) (solo para probar el
   frontend)
@@ -44,3 +46,5 @@ cd frontend && npm install
 
 3. Para probar sin Telegram, suscribe un webhook con
    [webhook.site](https://webhook.site).
+
+4. Pruebas: `npm test` (servidor) y `cargo test -p consent-registry` (contrato).
