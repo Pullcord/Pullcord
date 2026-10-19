@@ -7,6 +7,59 @@ nada por el usuario.
 
 Más contexto del proyecto en [docs/PROYECTO.md](docs/PROYECTO.md).
 
+## Demo
+
+- **Video:** https://youtu.be/Zdqvu9tshZI
+- **Sitio:** https://www.pullcord.xyz (el front, en Vercel). Solo muestra la
+  interfaz como demostración. La API no está alojada en ningún servidor, así
+  que desde el sitio en línea todavía no se puede completar una suscripción.
+  El flujo completo se corre en local, como se explica más abajo.
+- **Contrato de consentimiento (testnet):**
+  [`CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA`](https://stellar.expert/explorer/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA)
+  en Stellar Expert. Solo existe en testnet.
+
+Capturas del flujo real en testnet, corrido en local. Un pago de 20 XLM
+confirmado en el explorador y el aviso firmado que llegó al webhook (se
+taparon la IP y la URL de la bandeja de prueba):
+
+![Pago de testnet confirmado en Stellar Expert](docs/semana4/capturas/c-tx-confirmada-explorador.png)
+
+![Aviso firmado llegando a webhook.site](docs/semana4/capturas/d-aviso-llega-webhook.png)
+
+Más evidencia, con hashes de transacción, en
+[docs/semana4/MVPFunctional.md](docs/semana4/MVPFunctional.md).
+
+## Estado
+
+**Probado con evidencia**
+- Aviso por webhook firmado con HMAC: el pago de testnet de arriba disparó un
+  aviso con el encabezado `pullcord-signature`, visible en la captura.
+- Consentimiento en cadena con el contrato en testnet: `register` y `revoke`
+  confirmados como exitosos (ledgers 5263740 y 5263745, hashes en el
+  documento de semana 4). Para direcciones C es obligatorio y para las demás
+  es opcional.
+- Retiro del consentimiento: al retirarlo en la cadena, el servidor borra la
+  suscripción antes de la siguiente entrega. Esto está cubierto por las
+  pruebas automáticas (`npm test`) y por la lectura real del contrato.
+
+**Implementado, sin prueba real documentada**
+- Canal de Telegram: está en el código, pero no hay captura ni hash de una
+  prueba real. Sin `PULLCORD_TELEGRAM_BOT_TOKEN` no se activa.
+
+**Pendiente**
+- Alojar la API en un servidor siempre encendido.
+- Probar desde el navegador, con Freighter, el registro y el retiro del
+  consentimiento, y guardar las capturas. Hoy no hay captura ni video de eso,
+  ni de que el aviso deje de llegar después del retiro.
+- Publicar `@pullcord/notify` en npm.
+
+## Quién lo construyó
+
+Giovanny Amador ([`Eras256`](https://github.com/Eras256)) y Monserrat Mendoza
+([`M0nsxx`](https://github.com/M0nsxx)), en el bootcamp BAF "Blockchain
+Builders 101". Demo Day: 26 de octubre de 2026. Detalle de quién hizo qué en
+la semana 4 en [docs/semana4/MVPFunctional.md](docs/semana4/MVPFunctional.md).
+
 ## Requisitos
 
 - Node.js 22
