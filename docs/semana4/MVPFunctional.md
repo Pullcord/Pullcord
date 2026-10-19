@@ -31,8 +31,7 @@ Ordenados por impacto y esfuerzo.
 4. **Medio impacto, esfuerzo medio: el servidor lee el contrato sin enviar
    transacciones.** Mantiene la regla de que Pullcord solo avisa. Hecho.
 5. **Queda pendiente:** alojar la API en un servidor siempre encendido (hoy
-   el front desplegado no la alcanza), publicar `@pullcord/notify` en npm y
-   corregir el centrado del front en pantallas anchas.
+   el front desplegado no la alcanza) y publicar `@pullcord/notify` en npm.
 
 Lo que más nos enseñó la semana: el contrato es pequeño (cuatro funciones) y
 casi todo el trabajo estuvo en conectar bien las tres piezas: la firma de la
@@ -113,7 +112,9 @@ opción y no como paso obligatorio.
   35 pruebas automáticas del servidor.
 - **Front:** panel para registrar el consentimiento al terminar de
   suscribirse y para retirarlo desde la página de gestión, con firma de
-  Freighter. La firma no mueve fondos.
+  Freighter. La firma no mueve fondos. El encabezado (logo y botón de tema)
+  ahora se alinea al mismo ancho que el contenido del hero en pantallas
+  anchas, en vez de quedar pegado a las esquinas de la ventana.
 - **Cómo repetirlo:** los comandos están en el
   [README del contrato](../../contracts/consent-registry/README.md).
 
