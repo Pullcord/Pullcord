@@ -238,10 +238,10 @@ test("ssrf: subscribe-time checks reject internal hosts, IPs and credentials", a
 
 // --- Ownership (SEP-53) and API --------------------------------------------
 
-async function apiServer(extraCfg = {}) {
+async function apiServer(extraCfg = {}, extraDeps = {}) {
   const store = openStore();
   const resolve = fakeDns({ "app.example": ["93.184.215.14"] });
-  const app = await createApp({ ...cfg, allowHttpWebhooks: false, rpcUrl: "https://rpc.test", ...extraCfg }, { store, telegramUsername: "pullcord_test_bot", resolve });
+  const app = await createApp({ ...cfg, allowHttpWebhooks: false, rpcUrl: "https://rpc.test", ...extraCfg }, { store, telegramUsername: "pullcord_test_bot", resolve, ...extraDeps });
   const { server, url } = await new Promise((ok) => { const s = app.listen(0, "127.0.0.1", () => ok({ server: s, url: `http://127.0.0.1:${s.address().port}` })); });
   return { store, server, url, pc: new Pullcord({ url }) };
 }
@@ -287,17 +287,80 @@ test("ownership: a G subscription needs a valid SEP-53 signature over a fresh, s
   server.close();
 });
 
-test("ownership: C addresses are testnet-only and marked unverified; refused on other networks", async () => {
-  const t = await apiServer();
-  const sub = await t.pc.subscribe({ address: SAC, channel: { telegram: true } });
-  assert.equal(sub.ownershipProof, "none");
-  assert.match(sub.warning, /testnet only/);
+test("ownership: C addresses need an ACTIVE on-chain consent; refused on other networks", async () => {
+  const registered = [];
+  const readConsent = async ({ owner, reference }) => (registered.includes(`${owner}:${reference}`) ? { status: "Active", ledger: 5 } : null);
+  const t = await apiServer({}, { readConsent });
+  // Without registerConsent the client refuses before calling the API.
+  await assert.rejects(t.pc.subscribe({ address: SAC, channel: { telegram: true } }), /registerConsent is required/);
+  const sub = await t.pc.subscribe({
+    address: SAC,
+    channel: { telegram: true },
+    registerConsent: async ({ reference, contractId }) => {
+      assert.match(reference, /^[0-9a-f]{64}$/);
+      assert.equal(contractId, cfg.consentContractId);
+      registered.push(`${SAC}:${reference}`);
+    },
+  });
+  assert.equal(sub.ownershipProof, "onchain-consent");
+  assert.equal(sub.warning, undefined);
   assert.match(sub.telegramLink, /^https:\/\/t\.me\/pullcord_test_bot\?start=/);
+  // A client that "registers" nothing is refused.
+  await assert.rejects(t.pc.subscribe({ address: SAC, channel: { telegram: true }, registerConsent: async () => {} }), { status: 403 });
+  // No proof at all, and a made-up nonce, are refused.
+  assert.equal((await post(t.url, "/v1/subscriptions", { address: SAC, channel: { telegram: true } })).status, 401);
+  assert.equal((await post(t.url, "/v1/subscriptions", { address: SAC, channel: { telegram: true }, proof: { nonce: "abc" } })).status, 401);
+  // The consent reference is single use and tied to its address.
+  const info = await (await post(t.url, "/v1/subscriptions/consent-ref", { address: SAC })).json();
+  registered.push(`${SAC}:${info.reference}`);
+  assert.equal((await post(t.url, "/v1/subscriptions", { address: contractIdFromSeed(21), channel: { telegram: true }, proof: { nonce: info.nonce } })).status, 401);
+  // A wrong-address attempt does not burn the real owner's nonce; it works once, then it is spent.
+  assert.equal((await post(t.url, "/v1/subscriptions", { address: SAC, channel: { telegram: true }, proof: { nonce: info.nonce } })).status, 201);
+  assert.equal((await post(t.url, "/v1/subscriptions", { address: SAC, channel: { telegram: true }, proof: { nonce: info.nonce } })).status, 401, "the nonce is single use");
   t.server.close();
 
+  // A reference revoked on chain is not accepted.
+  const revoked = await apiServer({}, { readConsent: async () => ({ status: "Revoked", ledger: 9 }) });
+  const info3 = await (await post(revoked.url, "/v1/subscriptions/consent-ref", { address: SAC })).json();
+  assert.equal((await post(revoked.url, "/v1/subscriptions", { address: SAC, channel: { telegram: true }, proof: { nonce: info3.nonce } })).status, 403);
+  revoked.server.close();
+  // Registry unreachable: 502, nothing stored.
+  const down = await apiServer({}, { readConsent: async () => { throw new Error("rpc down"); } });
+  const info4 = await (await post(down.url, "/v1/subscriptions/consent-ref", { address: SAC })).json();
+  assert.equal((await post(down.url, "/v1/subscriptions", { address: SAC, channel: { telegram: true }, proof: { nonce: info4.nonce } })).status, 502);
+  assert.equal(down.store.stats().subscriptions, 0);
+  down.server.close();
+
   const m = await apiServer({ notifyNetwork: "mainnet" });
-  await assert.rejects(m.pc.subscribe({ address: SAC, channel: { telegram: true } }), { status: 403 });
+  await assert.rejects(m.pc.subscribe({ address: SAC, channel: { telegram: true }, registerConsent: async () => {} }), { status: 403 });
   m.server.close();
+});
+
+test("GET /:id reports the on-chain consent status, and /consent says where the registry is", async () => {
+  let record = null;
+  const t = await apiServer({}, { readConsent: async () => record });
+  const sub = await t.pc.subscribe({ address: BOB, channel: { webhook: "https://app.example/hook" }, signMessage: (m) => BOB_KEY.signMessage(m) });
+  const stored = t.store.get(sub.id);
+  assert.match(stored.consent_ref, /^[0-9a-f]{64}$/, "a G subscription also gets a consent reference");
+  const get = async () => (await fetch(`${t.url}/v1/subscriptions/${sub.id}`, { headers: { Authorization: `Bearer ${sub.manageToken}` } })).json();
+  assert.equal((await get()).consent.status, null, "never registered on chain");
+  assert.equal((await get()).consent.reference, stored.consent_ref);
+  record = { status: "Active", ledger: 1 };
+  assert.equal((await get()).consent.status, "Active");
+  record = { status: "Revoked", ledger: 2 };
+  assert.equal((await get()).consent.status, "Revoked");
+  const info = await (await fetch(`${t.url}/v1/subscriptions/consent`)).json();
+  assert.equal(info.contractId, cfg.consentContractId);
+  assert.equal(info.network, "testnet");
+  assert.match(info.explorer, /\/contract\/C/);
+  // the registry being down must not break reading a subscription
+  const down = await apiServer({}, { readConsent: async () => { throw new Error("rpc down"); } });
+  const s2 = await down.pc.subscribe({ address: BOB, channel: { webhook: "https://app.example/hook" }, signMessage: (m) => BOB_KEY.signMessage(m) });
+  const r = await fetch(`${down.url}/v1/subscriptions/${s2.id}`, { headers: { Authorization: `Bearer ${s2.manageToken}` } });
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).consent.status, null);
+  down.server.close();
+  t.server.close();
 });
 
 test("API and client: read, validation errors, unsubscribe", async () => {
@@ -308,7 +371,7 @@ test("API and client: read, validation errors, unsubscribe", async () => {
   await assert.rejects(pc.get(hook.id, "wrong"), { status: 404 });
   await assert.rejects(pc.subscribe({ address: "XNOTVALID", channel: { telegram: true } }), { status: 400 });
   await assert.rejects(pc.subscribe({ contract: SAC, channel: { telegram: true } }), { status: 501 });
-  await assert.rejects(pc.subscribe({ address: SAC, events: ["anything"], channel: { telegram: true } }), { status: 400 });
+  await assert.rejects(pc.subscribe({ address: SAC, events: ["anything"], channel: { telegram: true }, registerConsent: async () => {} }), { status: 400 });
   await assert.rejects(pc.subscribe({ address: BOB, channel: { webhook: "https://127.0.0.1/x" }, signMessage }), { status: 400 });
   await pc.unsubscribe(hook.id, hook.manageToken);
   assert.equal(store.get(hook.id), null);

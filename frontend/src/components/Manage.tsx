@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { ApiError, deleteSubscription, getSubscription, type Subscription } from "../api";
 import { shortAddr } from "../util";
+import { ConsentPanel } from "./ConsentPanel";
 
 type Err = { message: string; original?: string };
 const asErr = (e: unknown): Err => (e instanceof ApiError ? { message: e.friendly, original: e.message } : { message: "Algo salió mal." });
@@ -91,8 +92,15 @@ export function Manage() {
                     <dd>{sub.appLabel}</dd>
                   </>
                 )}
+                {sub.consent && (
+                  <>
+                    <dt className="text-ink2">Consentimiento en cadena</dt>
+                    <dd>{sub.consent.status === "Active" ? "Vigente" : sub.consent.status === "Revoked" ? "Retirado" : "Sin registrar"}</dd>
+                  </>
+                )}
               </dl>
             )}
+            {sub?.consent?.status === "Active" && <ConsentPanel address={sub.address} info={sub.consent} mode="revoke" />}
           </div>
 
           {sub && (

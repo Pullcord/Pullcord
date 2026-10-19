@@ -13,6 +13,8 @@ import { connect, detectFreighter, readNetwork, signChallenge } from "../wallet"
 import { downloadTxt, shortAddr, useReducedMotion, webhookProblem } from "../util";
 import { CopyButton } from "./CopyButton";
 import { LedSign } from "./LedSign";
+import { ConsentPanel } from "./ConsentPanel";
+import type { ConsentInfo } from "../consent";
 
 type ChannelKind = "telegram" | "webhook";
 const STEPS = ["Wallet", "Canal", "Firma", "Listo"];
@@ -41,10 +43,12 @@ export function Wizard() {
   const [webhook, setWebhook] = useState("");
   const [appLabel, setAppLabel] = useState("");
   const [done, setDone] = useState<Created | null>(null);
+  const [consent, setConsent] = useState<ConsentInfo | null>(null);
 
   const reset = () => {
     setStep(2);
     setDone(null);
+    setConsent(null);
   };
 
   return (
@@ -103,13 +107,14 @@ export function Wizard() {
                   webhook={webhook}
                   appLabel={appLabel}
                   back={() => setStep(2)}
-                  onDone={(c) => {
+                  onDone={(c, k) => {
                     setDone(c);
+                    setConsent(k);
                     setStep(4);
                   }}
                 />
               )}
-              {step === 4 && done && <StepDone data={done} again={reset} />}
+              {step === 4 && done && <StepDone data={done} consent={consent} again={reset} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -359,7 +364,7 @@ function StepSign(p: {
   webhook: string;
   appLabel: string;
   back: () => void;
-  onDone: (c: Created) => void;
+  onDone: (c: Created, consent: ConsentInfo | null) => void;
 }) {
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [loading, setLoading] = useState(true);
@@ -402,7 +407,7 @@ function StepSign(p: {
         signature,
         appLabel: p.appLabel.trim() || undefined,
       });
-      p.onDone(created);
+      p.onDone(created, challenge.consent ?? null);
     } catch (e) {
       setError(asError(e));
       setPhase("idle");
@@ -489,7 +494,7 @@ function Secret({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StepDone({ data, again }: { data: Created; again: () => void }) {
+function StepDone({ data, consent, again }: { data: Created; consent: ConsentInfo | null; again: () => void }) {
   const reduced = useReducedMotion();
   const [qr, setQr] = useState<string | null>(null);
   const [linked, setLinked] = useState<boolean | null>(null);
@@ -586,6 +591,12 @@ function StepDone({ data, again }: { data: Created; again: () => void }) {
           <Download size={18} aria-hidden /> Descargar como .txt
         </button>
       </div>
+
+      {consent && (
+        <div className="mt-6">
+          <ConsentPanel address={data.address} info={consent} mode="register" />
+        </div>
+      )}
 
       <div className="mt-8 rounded-xl bg-elevated p-4">
         <h4 className="font-display text-lg font-bold">Pruébalo ahora</h4>

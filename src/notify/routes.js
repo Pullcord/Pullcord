@@ -3,12 +3,17 @@
 //
 // Ownership: a G address needs a SEP-53 signature over a one-time challenge
 // (POST /challenge, then POST / with { proof: { nonce, signature } }).
-// A C address cannot sign SEP-53 messages; until the on-chain consent registry
-// exists, C subscriptions are accepted on testnet only and marked unverified.
+// A C address cannot sign SEP-53 messages, so it proves consent on chain: the
+// owner calls `register(owner, reference)` on the consent registry (contracts/
+// consent-registry) with their own auth, then subscribes with the nonce that
+// produced that reference (POST /consent-ref, then POST / with { proof: { nonce } }).
+// Revoking on chain stops notifications and deletes the stored personal data.
 import express from "express";
 import { StrKey } from "@stellar/stellar-sdk";
 import { assertPublicHost } from "./ssrf.js";
 import { buildChallenge, verifyOwnership } from "./ownership.js";
+import { consentRefFromNonce, readConsent as defaultReadConsent } from "./consent.js";
+import { randomBytes } from "node:crypto";
 
 export const SUPPORTED_EVENTS = ["payment.received"];
 
@@ -50,9 +55,15 @@ export async function checkWebhookUrl(raw, { allowHttp = false, resolve } = {}) 
   return null;
 }
 
-export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolve }) {
+export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolve, readConsent = defaultReadConsent, fetchImpl = fetch }) {
   const r = express.Router();
   r.use(express.json({ limit: "16kb" }));
+
+  const consentInfo = () => ({
+    contractId: cfg.consentContractId,
+    network: cfg.notifyNetwork,
+    explorer: cfg.consentContractId ? `${cfg.notifyExplorerBase}/contract/${cfg.consentContractId}` : null,
+  });
 
   const bearer = (req) => (req.get("authorization") || "").replace(/^Bearer\s+/i, "") || null;
   const view = (s) => ({
@@ -69,11 +80,36 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
   // Step 1: the app asks for a challenge and has the user's wallet sign `message` (SEP-53).
   r.post("/challenge", (req, res) => {
     const { address } = req.body || {};
-    if (isC(address)) return res.status(400).json({ error: "contract addresses cannot sign SEP-53 messages; no challenge needed on testnet" });
+    if (isC(address)) return res.status(400).json({ error: "contract addresses cannot sign SEP-53 messages: use POST /v1/subscriptions/consent-ref and register consent on chain" });
     if (!isG(address)) return res.status(400).json({ error: "address must be a valid G address" });
     const c = buildChallenge(address, cfg.notifyNetwork);
     store.saveChallenge({ nonce: c.nonce, address, message: c.message, expiresAt: c.expiresAt });
-    res.status(201).json({ nonce: c.nonce, message: c.message, expiresAt: new Date(c.expiresAt).toISOString(), standard: "SEP-53" });
+    res.status(201).json({
+      nonce: c.nonce,
+      message: c.message,
+      expiresAt: new Date(c.expiresAt).toISOString(),
+      standard: "SEP-53",
+      // Optional: the owner can also record consent on chain with this reference (revocable, verifiable by anyone).
+      consent: { ...consentInfo(), reference: consentRefFromNonce(c.nonce) },
+    });
+  });
+
+  // Public, read-only: where the consent registry lives.
+  r.get("/consent", (_req, res) => {
+    if (!cfg.consentContractId) return res.status(404).json({ error: "consent registry not configured" });
+    res.json(consentInfo());
+  });
+
+  // Step 1 for contract (C) addresses, and for any address that wants on-chain consent:
+  // the server issues a single-use nonce; the reference to register on chain is derived from it.
+  r.post("/consent-ref", (req, res) => {
+    const { address } = req.body || {};
+    if (!isG(address) && !isC(address)) return res.status(400).json({ error: "address must be a valid G or C address" });
+    if (!cfg.consentContractId) return res.status(503).json({ error: "consent registry not configured" });
+    const nonce = randomBytes(16).toString("hex");
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    store.saveChallenge({ nonce, address, message: "consent-ref", expiresAt });
+    res.status(201).json({ nonce, expiresAt: new Date(expiresAt).toISOString(), ...consentInfo(), reference: consentRefFromNonce(nonce) });
   });
 
   // Step 2: subscribe with the signed challenge.
@@ -88,6 +124,7 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
     if (label.error) return res.status(400).json({ error: label.error });
 
     let ownershipProof;
+    let consentRef = null;
     if (isG(address)) {
       if (!proof?.nonce || !proof?.signature) {
         return res.status(401).json({ error: "ownership proof required: POST /v1/subscriptions/challenge, sign the message with the wallet (SEP-53), send { proof: { nonce, signature } }" });
@@ -96,12 +133,26 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
       if (!challenge) return res.status(401).json({ error: "challenge unknown, used or expired" });
       if (!verifyOwnership(address, challenge.message, proof.signature)) return res.status(401).json({ error: "signature does not match the address" });
       ownershipProof = "sep53";
+      consentRef = consentRefFromNonce(proof.nonce);
     } else {
-      if (cfg.notifyNetwork !== "testnet") return res.status(403).json({ error: "contract address subscriptions need on-chain consent, not available on this network yet" });
-      ownershipProof = "none";
+      // Contract address: an ACTIVE on-chain consent for this address and this reference is the only proof.
+      if (cfg.notifyNetwork !== "testnet" || !cfg.consentContractId) return res.status(403).json({ error: "contract address subscriptions need on-chain consent, not available on this network yet" });
+      if (!proof?.nonce) return res.status(401).json({ error: "consent proof required: POST /v1/subscriptions/consent-ref, call register(owner, reference) on the consent registry, send { proof: { nonce } }" });
+      const issued = store.takeChallenge(proof.nonce, address);
+      if (!issued || issued.message !== "consent-ref") return res.status(401).json({ error: "consent reference unknown, used or expired" });
+      const reference = consentRefFromNonce(proof.nonce);
+      let consent;
+      try {
+        consent = await readConsent({ rpcUrl: cfg.notifyRpcUrl, contractId: cfg.consentContractId, owner: address, reference, fetchImpl });
+      } catch (err) {
+        return res.status(502).json({ error: `could not read the consent registry (${err.message})` });
+      }
+      if (consent?.status !== "Active") return res.status(403).json({ error: "no active on-chain consent for this address and reference" });
+      ownershipProof = "onchain-consent";
+      consentRef = reference;
     }
 
-    const base = { address, events, ownershipProof, appLabel: label.value };
+    const base = { address, events, ownershipProof, appLabel: label.value, consentRef };
     let created;
     if (channel.webhook) {
       const problem = await checkWebhookUrl(channel.webhook, { allowHttp: cfg.allowHttpWebhooks, resolve });
@@ -116,7 +167,6 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
 
     res.status(201).json({
       ...view(created),
-      ...(ownershipProof === "none" ? { warning: "testnet only: contract address ownership is not verified" } : {}),
       secret: created.webhookSecret ?? undefined,
       telegramLink: created.telegramLinkToken ? `https://t.me/${telegramUsername}?start=${created.telegramLinkToken}` : undefined,
       manageToken: created.manageToken,
@@ -129,10 +179,20 @@ export function subscriptionRoutes(cfg, { store, telegramUsername = null, resolv
   // with >= 1 delivered notification).
   r.get("/stats", (_req, res) => res.json(store.stats()));
 
-  r.get("/:id", (req, res) => {
+  r.get("/:id", async (req, res) => {
     const sub = store.authorize(req.params.id, bearer(req));
     if (!sub) return res.status(404).json({ error: "not found" });
-    res.json(view(sub));
+    const body = view(sub);
+    if (sub.consent_ref && cfg.consentContractId) {
+      let status = null;
+      try {
+        status = (await readConsent({ rpcUrl: cfg.notifyRpcUrl, contractId: cfg.consentContractId, owner: sub.address, reference: sub.consent_ref, fetchImpl }))?.status ?? null;
+      } catch {
+        // the registry being unreachable must not break reading a subscription
+      }
+      body.consent = { ...consentInfo(), reference: sub.consent_ref, status };
+    }
+    res.json(body);
   });
 
   // Deletes the subscription and its personal data (webhook URL, chat ID).

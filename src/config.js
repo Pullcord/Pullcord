@@ -16,6 +16,8 @@ export function loadConfig(env = process.env) {
     notifyRpcUrl: env.PULLCORD_NOTIFY_RPC_URL || "https://soroban-testnet.stellar.org",
     notifyNetwork: env.PULLCORD_NOTIFY_NETWORK || "testnet",
     notifyExplorerBase: env.PULLCORD_NOTIFY_EXPLORER_BASE || "https://stellar.expert/explorer/testnet",
+    // On-chain consent registry (contracts/consent-registry), testnet.
+    consentContractId: env.PULLCORD_CONSENT_CONTRACT ?? "CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA",
     dbPath: env.PULLCORD_DB_PATH || "pullcord.db",
     telegramBotToken: env.PULLCORD_TELEGRAM_BOT_TOKEN || "",
     watcherEnabled: env.PULLCORD_WATCHER !== "off",

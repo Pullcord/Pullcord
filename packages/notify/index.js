@@ -37,13 +37,22 @@ export class Pullcord {
   // appLabel: optional, short name of YOUR app (max 40 chars, no personal
   // data) — used only to count integrated apps, never shown publicly with
   // any address or secret.
+  // registerConsent: ({ reference, contractId, network, explorer }) => Promise.
+  // Required for C (contract) addresses, which cannot sign SEP-53 messages: it must
+  // call register(owner, reference) on the consent registry with the owner's own auth
+  // and resolve once the transaction succeeds. No personal data goes on chain.
   // Returns { id, secret?, telegramLink?, manageToken }. Secrets are shown once: store them.
-  async subscribe({ address, contract, events = ["payment.received"], channel, signMessage, appLabel }) {
+  async subscribe({ address, contract, events = ["payment.received"], channel, signMessage, registerConsent, appLabel }) {
     let proof;
     if (typeof address === "string" && address.startsWith("G")) {
       if (typeof signMessage !== "function") throw new Error("Pullcord: signMessage is required for G addresses (SEP-53)");
       const challenge = await this.#request("POST", "/v1/subscriptions/challenge", { body: { address } });
       proof = { nonce: challenge.nonce, signature: encodeSignature(await signMessage(challenge.message)) };
+    } else if (typeof address === "string" && address.startsWith("C")) {
+      if (typeof registerConsent !== "function") throw new Error("Pullcord: registerConsent is required for C addresses (on-chain consent)");
+      const info = await this.#request("POST", "/v1/subscriptions/consent-ref", { body: { address } });
+      await registerConsent({ reference: info.reference, contractId: info.contractId, network: info.network, explorer: info.explorer });
+      proof = { nonce: info.nonce };
     }
     return this.#request("POST", "/v1/subscriptions", { body: { address, contract, events, channel, proof, appLabel } });
   }
