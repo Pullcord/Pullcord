@@ -18,9 +18,13 @@ Más contexto del proyecto en [docs/PROYECTO.md](docs/PROYECTO.md).
   [`CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA`](https://stellar.expert/explorer/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA)
   en Stellar Expert. Solo existe en testnet.
 
-Capturas del flujo real en testnet, corrido en local. Un pago de 20 XLM
-confirmado en el explorador y el aviso firmado que llegó al webhook (se
-taparon la IP y la URL de la bandeja de prueba):
+Capturas del flujo real en testnet, corrido en local, en orden: firmar el
+permiso, pagar, confirmar y avisar. El pago fue de 20 XLM. En la última se
+taparon la IP y la URL de la bandeja de prueba.
+
+![Firma del permiso: reto SEP-53 de un solo uso que no mueve fondos](docs/semana4/capturas/a-firma-permiso.png)
+
+![Envío del pago de testnet desde Freighter](docs/semana4/capturas/b-pago-testnet-enviando.png)
 
 ![Pago de testnet confirmado en Stellar Expert](docs/semana4/capturas/c-tx-confirmada-explorador.png)
 
@@ -52,6 +56,24 @@ Más evidencia, con hashes de transacción, en
   consentimiento, y guardar las capturas. Hoy no hay captura ni video de eso,
   ni de que el aviso deje de llegar después del retiro.
 - Publicar `@pullcord/notify` en npm.
+
+## Integrarlo en tu app
+
+El paquete está en [packages/notify](packages/notify/README.md) y se instala
+desde este repo con `npm install ./packages/notify`. Hay un ejemplo corto de
+suscripción en [examples/subscribe.js](examples/subscribe.js) y uno de cómo
+recibir y verificar el webhook en [examples/receiver.js](examples/receiver.js).
+
+## Privacidad
+
+- Fuera de la cadena, el servidor guarda la dirección suscrita y el canal: la
+  URL del webhook (con su secreto HMAC) o el chat ID de Telegram.
+- En la cadena, solo si registras el consentimiento, quedan tu dirección y un
+  hash. Ningún dato personal. Ese registro es público y no se puede borrar.
+- Puedes borrar tu suscripción y sus datos cuando quieras con el ID y el
+  `manageToken` (`DELETE /v1/subscriptions/:id`, o desde la página de
+  gestión). Si retiras el consentimiento en la cadena, el servidor también la
+  borra.
 
 ## Quién lo construyó
 
@@ -101,3 +123,7 @@ cd frontend && npm install
    [webhook.site](https://webhook.site).
 
 4. Pruebas: `npm test` (servidor) y `cargo test -p consent-registry` (contrato).
+
+## Licencia
+
+[Apache License 2.0](LICENSE).
