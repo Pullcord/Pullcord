@@ -9,7 +9,26 @@
   - `register` (consentimiento A), ledger 5263740: [`9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a`](https://stellar.expert/explorer/testnet/tx/9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a)
   - `register` (consentimiento B), ledger 5263741: [`ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad`](https://stellar.expert/explorer/testnet/tx/ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad)
   - `revoke` (consentimiento A), ledger 5263745: [`3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7`](https://stellar.expert/explorer/testnet/tx/3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7)
-- **Video (máx. 3 min):** PENDIENTE. Todavía no hay enlace público.
+  - Pago de prueba de 20 XLM que disparó el aviso, ledger 5280278 (19-oct-2026): [`cbd137c403fdb0218f5dc4c7f9a4e294d0d937e6de6ffe3bd66c5bc5b4745b76`](https://stellar.expert/explorer/testnet/tx/cbd137c403fdb0218f5dc4c7f9a4e294d0d937e6de6ffe3bd66c5bc5b4745b76)
+- **Video (máx. 3 min):** PENDIENTE. El flujo en el navegador ya se grabó (78 s, sin editar), pero todavía no tiene enlace público.
+
+## Evidencia del flujo en el navegador (19-oct-2026)
+
+Flujo normal, corrido en local contra testnet: firmar el permiso, recibir un
+pago y ver llegar el aviso.
+
+1. Firma del permiso (reto SEP-53, de un solo uso, no mueve fondos):
+   ![Firma del permiso](capturas/a-firma-permiso.png)
+2. Pago de testnet enviado desde Freighter a la dirección suscrita:
+   ![Pago de testnet](capturas/b-pago-testnet-enviando.png)
+3. La transacción confirmada en Stellar Expert:
+   ![Transacción confirmada](capturas/c-tx-confirmada-explorador.png)
+4. El aviso firmado (`pullcord-signature`) llegando al webhook. Se taparon la
+   IP y la URL de la bandeja de prueba:
+   ![Aviso en el webhook](capturas/d-aviso-llega-webhook.png)
+
+No hay captura ni video de retirar el consentimiento ni de que el aviso deje
+de llegar después. Eso quedó pendiente.
 - **Producto en línea:** el front está publicado en [pullcord.xyz](https://pullcord.xyz) (Vercel), solo como demostración. La API no está alojada en ningún servidor: `www.pullcord.xyz/healthz` responde 404. El flujo completo (suscripción, consentimiento, aviso) se corre en local siguiendo el [README](../../README.md); el front publicado muestra un aviso visible de que es una vista de demostración.
 
 ## Aprendizajes y ajustes priorizados
@@ -46,7 +65,10 @@ wallet, la lectura del registro y el borrado de los datos al retirar.
 - **El botón de firma en el front aún no se probó con una firma real de
   Freighter dentro del navegador.** El contrato y las transacciones sí se
   probaron en testnet, y la invocación que arma el front se simuló contra el
-  contrato desplegado. Falta una prueba manual de punta a punta.
+  contrato desplegado. El 19-oct se grabó en el navegador la firma del
+  permiso, el pago y el aviso (ver la evidencia de arriba), pero en este
+  documento no hay hash de un registro de consentimiento hecho desde el
+  front, y el retiro desde el front sigue sin probarse.
 - **El camino de las direcciones C se probó con pruebas automáticas y con la
   lectura real del contrato, pero no con una cuenta de contrato real** que
   firme el registro.
@@ -126,3 +148,6 @@ opción y no como paso obligatorio.
 - **Monserrat Mendoza** (`M0nsxx`): PENDIENTE: completar con su trabajo de
   esta semana (prueba del panel de consentimiento con Freighter y ajustes
   del front).
+  Evidencia del panel en el navegador: las [capturas del flujo](#evidencia-del-flujo-en-el-navegador-19-oct-2026)
+  (firma del permiso, pago y aviso). La prueba de retirar el consentimiento
+  y comprobar que el aviso deja de llegar quedó pendiente: no se grabó.
