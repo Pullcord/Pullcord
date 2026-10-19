@@ -29,11 +29,13 @@ function ThemeToggle() {
 
 export function Header() {
   return (
-    <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-3">
-      <a href="#top" aria-label="pullcord, inicio">
-        <Logo />
-      </a>
-      <ThemeToggle />
+    <header className="absolute inset-x-0 top-0 z-20 px-4 py-3">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
+        <a href="#top" aria-label="pullcord, inicio">
+          <Logo />
+        </a>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }
