@@ -39,7 +39,7 @@ export function Wizard() {
   const reduced = useReducedMotion();
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState<string | null>(null);
-  const [channel, setChannel] = useState<ChannelKind>("telegram");
+  const [channel, setChannel] = useState<ChannelKind>("webhook");
   const [webhook, setWebhook] = useState("");
   const [appLabel, setAppLabel] = useState("");
   const [done, setDone] = useState<Created | null>(null);
@@ -275,6 +275,14 @@ function StepChannel(p: {
         </div>
       </fieldset>
 
+      <p className="mt-4 rounded-xl border p-3 text-sm" style={{ borderColor: "var(--control)" }}>
+        ¿Solo quieres probar? Abre{" "}
+        <a className="text-signal-text underline" href="https://webhook.site/" target="_blank" rel="noreferrer">
+          webhook.site
+        </a>
+        , copia la URL que te da, elige Webhook y pégala aquí. Ahí ves llegar el aviso en segundos, sin crear cuenta.
+      </p>
+
       {p.channel === "webhook" && (
         <div className="mt-5">
           <label htmlFor="webhook" className="font-medium">
@@ -293,15 +301,12 @@ function StepChannel(p: {
             aria-describedby="webhook-help"
           />
           <p id="webhook-help" className="mt-1 text-sm" style={{ color: wProblem ? "var(--err)" : "var(--text-2)" }} aria-live="polite">
-            {wProblem ?? (
-              <>
-                Tiene que ser https. Para probar, abre{" "}
-                <a className="text-signal-text underline" href="https://webhook.site" target="_blank" rel="noreferrer">
-                  webhook.site
-                </a>
-                : te da una URL pública donde ves llegar los avisos.
-              </>
-            )}
+            {wProblem ? `${wProblem.replace(/\.$/, "")}. ` : "Tiene que ser https. "}
+            Para probar, abre{" "}
+            <a className="text-signal-text underline" href="https://webhook.site/" target="_blank" rel="noreferrer">
+              webhook.site
+            </a>
+            : te da una URL pública donde ves llegar los avisos.
           </p>
         </div>
       )}
