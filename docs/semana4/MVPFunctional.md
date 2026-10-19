@@ -145,9 +145,19 @@ opción y no como paso obligatorio.
 - **Giovanny Amador** (`Eras256`): contrato, despliegue en testnet, lectura
   en el servidor, pruebas, y esta documentación, con Claude Code como par de
   programación.
-- **Monserrat Mendoza** (`M0nsxx`): PENDIENTE: completar con su trabajo de
-  esta semana (prueba del panel de consentimiento con Freighter y ajustes
-  del front).
-  Evidencia del panel en el navegador: las [capturas del flujo](#evidencia-del-flujo-en-el-navegador-19-oct-2026)
-  (firma del permiso, pago y aviso). La prueba de retirar el consentimiento
-  y comprobar que el aviso deja de llegar quedó pendiente: no se grabó.
+- **Monserrat Mendoza** (`M0nsxx`): Esto hice yo esta semana, con Claude
+  Code como par de programación.
+  - Grabé el video crudo del flujo en el navegador: firmar el permiso, pagar
+    en testnet y ver llegar el aviso a webhook.site. Las
+    [capturas del flujo](#evidencia-del-flujo-en-el-navegador-19-oct-2026)
+    de este documento son fotogramas de esa grabación, no de una corrida
+    aparte.
+  - Alineé el logo y el botón de tema del encabezado al ancho del contenido
+    en pantallas anchas ([PR #11](https://github.com/Pullcord/Pullcord/pull/11)).
+    El desfase que se ve en la captura 1 de la semana 3 no pude
+    reproducirlo, así que no digo que lo arreglé: solo que el encabezado
+    ya no queda pegado a las esquinas.
+  - **Pendiente, no se probó:** registrar el consentimiento en la cadena
+    desde el navegador con Freighter (en mi grabación no se ve esa firma ni
+    hay hash de ese registro), retirarlo desde el front y comprobar que el
+    aviso deja de llegar después. No hay capturas ni video de eso.
