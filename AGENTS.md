@@ -92,6 +92,15 @@ verdad. Contenido que solo está en el chat no está en disco.
 **Un secreto pegado en una sesión se trata como expuesto.** Rótalo o revócalo
 antes de usarlo para algo con valor real.
 
+**Verifica la identidad activa antes de publicar algo a nombre de alguien.**
+Esta máquina tiene varias cuentas logueadas a la vez en `git`, `gh` y `vercel`,
+y pueden no coincidir con quien está en la sesión (ya pasó: `gh` activo en
+otra cuenta, `vercel whoami` de un tercero sin acceso al proyecto real).
+Antes de un commit, push, acción de `gh` o despliegue: `git config
+user.email` (local, del repo), `gh api user --jq .login` y `vercel whoami`
+(si aplica) tienen que ser la cuenta correcta. Si no coincide, para y dilo
+antes de seguir, no lo arregles en silencio.
+
 **Trailer de coautoría de IA, visible, con el modelo real.** En cada commit y
 en cada PR se incluye el trailer, nunca se oculta ni se quita. El modelo cambia
 entre sesiones: usa el que produjo ese commit.
