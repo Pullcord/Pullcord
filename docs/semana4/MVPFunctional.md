@@ -10,7 +10,7 @@
   - `register` (consentimiento B), ledger 5263741: [`ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad`](https://stellar.expert/explorer/testnet/tx/ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad)
   - `revoke` (consentimiento A), ledger 5263745: [`3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7`](https://stellar.expert/explorer/testnet/tx/3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7)
   - Pago de prueba de 20 XLM que disparó el aviso, ledger 5280278 (19-oct-2026): [`cbd137c403fdb0218f5dc4c7f9a4e294d0d937e6de6ffe3bd66c5bc5b4745b76`](https://stellar.expert/explorer/testnet/tx/cbd137c403fdb0218f5dc4c7f9a4e294d0d937e6de6ffe3bd66c5bc5b4745b76)
-- **Video (máx. 3 min):** https://youtu.be/Zdqvu9tshZI — flujo real del navegador narrado en español (voz ElevenLabs), con subtítulos: conectar wallet, firmar el permiso, registrar consentimiento en la cadena, pagar en testnet y ver el aviso firmado llegar a webhook.site.
+- **Video (máx. 3 min):** https://youtu.be/Zdqvu9tshZI — flujo real del navegador narrado en español (voz ElevenLabs), con subtítulos: conectar wallet, firmar el permiso, pagar en testnet y ver el aviso firmado llegar a webhook.site.
 
 ## Evidencia del flujo en el navegador (19-oct-2026)
 
