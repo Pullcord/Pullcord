@@ -10,10 +10,14 @@ Más contexto del proyecto en [docs/PROYECTO.md](docs/PROYECTO.md).
 ## Demo
 
 - **Video:** https://youtu.be/Zdqvu9tshZI
-- **Sitio:** https://www.pullcord.xyz (el front, en Vercel). Solo muestra la
-  interfaz como demostración. La API no está alojada en ningún servidor, así
-  que desde el sitio en línea todavía no se puede completar una suscripción.
-  El flujo completo se corre en local, como se explica más abajo.
+- **Sitio:** https://www.pullcord.xyz (el front, en Vercel), conectado a la
+  API en testnet.
+- **API:** https://pullcord-notify.fly.dev (Fly.io, una sola máquina siempre
+  encendida, testnet). El sitio le reenvía `/v1` y `/healthz`. Desde el 19 de
+  octubre de 2026 el sitio en línea ya responde con la API real
+  (`/healthz` y el reto de firma), pero el flujo completo desde el sitio
+  (firmar, suscribirse y recibir un aviso) todavía no tiene una prueba
+  documentada. La que hay se corrió en local.
 - **Contrato de consentimiento (testnet):**
   [`CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA`](https://stellar.expert/explorer/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA)
   en Stellar Expert. Solo existe en testnet.
@@ -51,7 +55,8 @@ Más evidencia, con hashes de transacción, en
   prueba real. Sin `PULLCORD_TELEGRAM_BOT_TOKEN` no se activa.
 
 **Pendiente**
-- Alojar la API en un servidor siempre encendido.
+- Correr el flujo completo desde el sitio en línea contra la API en Fly y
+  guardar la evidencia (hash del pago y aviso recibido).
 - Probar desde el navegador, con Freighter, el registro y el retiro del
   consentimiento, y guardar las capturas. Hoy no hay captura ni video de eso,
   ni de que el aviso deje de llegar después del retiro.

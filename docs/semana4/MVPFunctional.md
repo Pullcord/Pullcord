@@ -29,7 +29,7 @@ pago y ver llegar el aviso.
 
 No hay captura ni video de retirar el consentimiento ni de que el aviso deje
 de llegar después. Eso quedó pendiente.
-- **Producto en línea:** el front está publicado en [pullcord.xyz](https://pullcord.xyz) (Vercel), solo como demostración. La API no está alojada en ningún servidor: `www.pullcord.xyz/healthz` responde 404. El flujo completo (suscripción, consentimiento, aviso) se corre en local siguiendo el [README](../../README.md); el front publicado muestra un aviso visible de que es una vista de demostración.
+- **Producto en línea:** el front está en [pullcord.xyz](https://pullcord.xyz) (Vercel) y la API en [pullcord-notify.fly.dev](https://pullcord-notify.fly.dev/healthz) (Fly.io, una sola máquina siempre encendida, testnet), desplegada el 19-oct-2026. El sitio reenvía `/v1` y `/healthz` a la API: `www.pullcord.xyz/healthz` responde 200 y el reto de firma sale de la API real. El flujo completo desde el sitio (firmar, suscribirse, recibir un aviso) todavía no tiene una prueba documentada; la evidencia de abajo se corrió en local.
 
 ## Aprendizajes y ajustes priorizados
 
@@ -49,8 +49,8 @@ Ordenados por impacto y esfuerzo.
    servidor. Hecho.
 4. **Medio impacto, esfuerzo medio: el servidor lee el contrato sin enviar
    transacciones.** Mantiene la regla de que Pullcord solo avisa. Hecho.
-5. **Queda pendiente:** alojar la API en un servidor siempre encendido (hoy
-   el front desplegado no la alcanza) y publicar `@pullcord/notify` en npm.
+5. **Queda pendiente:** correr el flujo completo desde el sitio contra la
+   API en Fly, con evidencia, y publicar `@pullcord/notify` en npm.
 
 Lo que más nos enseñó la semana: el contrato es pequeño (cuatro funciones) y
 casi todo el trabajo estuvo en conectar bien las tres piezas: la firma de la
@@ -58,10 +58,10 @@ wallet, la lectura del registro y el borrado de los datos al retirar.
 
 ## Riesgos y pendientes
 
-- **La API no está alojada en un servidor siempre encendido.** El front en
-  línea funciona solo en modo demostración. Sin ese servidor, nadie puede
-  suscribirse desde el sitio público. Hay un `fly.toml` listo; falta decidir
-  el costo y desplegar.
+- **La API corre en una sola máquina de Fly.io.** Es a propósito: el
+  watcher es un solo proceso y la base SQLite vive en un volumen. Si esa
+  máquina cae, no hay avisos hasta que vuelva. El flujo completo desde el
+  sitio público todavía no se probó de punta a punta.
 - **El botón de firma en el front aún no se probó con una firma real de
   Freighter dentro del navegador.** El contrato y las transacciones sí se
   probaron en testnet, y la invocación que arma el front se simuló contra el
