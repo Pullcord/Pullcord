@@ -4,13 +4,13 @@
 
 - **Repositorio:** https://github.com/Pullcord/Pullcord
 - **Contrato propio (testnet):** [`CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA`](https://stellar.expert/explorer/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA) ([Stellar Lab](https://lab.stellar.org/r/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA))
-- **Transacciones en testnet** (todas exitosas, verificadas en Horizon el 18-oct-2026):
-  - Despliegue, ledger 5263735: [`1f27fd26…09f`](https://stellar.expert/explorer/testnet/tx/1f27fd26794212358d2e8df895fa65d7a9e742980e188801681d1a04c1d0f09f)
-  - `register` (consentimiento A), ledger 5263740: [`9366d289…96a`](https://stellar.expert/explorer/testnet/tx/9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a)
-  - `register` (consentimiento B), ledger 5263741: [`ae1743d6…4ad`](https://stellar.expert/explorer/testnet/tx/ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad)
-  - `revoke` (consentimiento A), ledger 5263745: [`3a2994a6…8c7`](https://stellar.expert/explorer/testnet/tx/3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7)
-- **Video (máx. 3 min):** PENDIENTE: pegar aquí el enlace público de YouTube.
-- **Producto en línea:** PENDIENTE: pegar aquí el enlace del front desplegado.
+- **Transacciones en testnet** (todas exitosas, re-verificadas en Horizon el 19-oct-2026):
+  - Despliegue, ledger 5263735: [`1f27fd26794212358d2e8df895fa65d7a9e742980e188801681d1a04c1d0f09f`](https://stellar.expert/explorer/testnet/tx/1f27fd26794212358d2e8df895fa65d7a9e742980e188801681d1a04c1d0f09f)
+  - `register` (consentimiento A), ledger 5263740: [`9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a`](https://stellar.expert/explorer/testnet/tx/9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a)
+  - `register` (consentimiento B), ledger 5263741: [`ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad`](https://stellar.expert/explorer/testnet/tx/ae1743d6a03450d598a2a028cabc28d3b250bba78a4dc3f16fc146677594f4ad)
+  - `revoke` (consentimiento A), ledger 5263745: [`3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7`](https://stellar.expert/explorer/testnet/tx/3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7)
+- **Video (máx. 3 min):** PENDIENTE. Todavía no hay enlace público.
+- **Producto en línea:** el front está publicado en [pullcord.xyz](https://pullcord.xyz) (Vercel), solo como demostración. La API no está alojada en ningún servidor: `www.pullcord.xyz/healthz` responde 404. El flujo completo (suscripción, consentimiento, aviso) se corre en local siguiendo el [README](../../README.md); el front publicado muestra un aviso visible de que es una vista de demostración.
 
 ## Aprendizajes y ajustes priorizados
 
