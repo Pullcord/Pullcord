@@ -4,6 +4,7 @@ import { loadConfig, paidRouteEnabled } from "./config.js";
 import { REGISTRY, findContract } from "./registry.js";
 import { buildReport } from "./read.js";
 import { subscriptionRoutes } from "./notify/routes.js";
+import { alertRoutes } from "./alerts/routes.js";
 import { openStore } from "./notify/store.js";
 import { startWatcher } from "./notify/watcher.js";
 import { startTelegram, getBotUsername } from "./notify/telegram.js";
@@ -37,6 +38,7 @@ export async function createApp(config = loadConfig(), deps = {}) {
   // Notifications. Mounted only when a subscription store is provided.
   if (deps.store) {
     app.use("/v1/subscriptions", subscriptionRoutes(config, { store: deps.store, telegramUsername: deps.telegramUsername, resolve: deps.resolve, readConsent: deps.readConsent, fetchImpl: deps.fetchImpl }));
+    app.use("/v1/alerts", alertRoutes({ store: deps.store }));
   }
 
   // Paid route (x402). Enabled only when the facilitator and pay-to wallet are configured.

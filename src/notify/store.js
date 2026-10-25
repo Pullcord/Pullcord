@@ -43,6 +43,24 @@ export function openStore(path = ":memory:") {
       message TEXT NOT NULL,
       expires_at INTEGER NOT NULL
     );
+    -- External alert sources (e.g. another app's own monitor), registered
+    -- out of band (scripts/register-alert-source.mjs), one HMAC secret each.
+    CREATE TABLE IF NOT EXISTS alert_sources (
+      name TEXT PRIMARY KEY,
+      secret TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
+    -- Alerts POSTed by a registered external source (POST /v1/alerts/external).
+    CREATE TABLE IF NOT EXISTS external_alerts (
+      id TEXT PRIMARY KEY,
+      source TEXT NOT NULL,
+      type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      data TEXT,
+      received_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS external_alerts_source ON external_alerts(source);
   `);
   for (const migration of [
     "ALTER TABLE subscriptions ADD COLUMN ownership_proof TEXT NOT NULL DEFAULT 'none'",
@@ -151,6 +169,34 @@ export function openStore(path = ":memory:") {
       const subscriptions = db.prepare("SELECT COUNT(*) AS n FROM subscriptions").get().n;
       const notificationsSent = db.prepare("SELECT COUNT(*) AS n FROM deliveries WHERE status = 'sent'").get().n;
       return { appsIntegrated, subscriptions, notificationsSent };
+    },
+
+    // Registers a new external alert source with a fresh HMAC secret.
+    // Out-of-band only (no public API): see scripts/register-alert-source.mjs.
+    createAlertSource(name) {
+      const secret = token(32);
+      db.prepare("INSERT INTO alert_sources (name, secret, created_at) VALUES (?, ?, ?)").run(name, secret, now());
+      return { name, secret };
+    },
+
+    getAlertSource(name) {
+      return db.prepare("SELECT * FROM alert_sources WHERE name = ?").get(name) ?? null;
+    },
+
+    saveAlert({ source, type, message, severity, data = null }) {
+      const id = randomUUID();
+      const receivedAt = now();
+      db.prepare(
+        "INSERT INTO external_alerts (id, source, type, message, severity, data, received_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      ).run(id, source, type, message, severity, data ? JSON.stringify(data) : null, receivedAt);
+      return { id, receivedAt };
+    },
+
+    listAlerts({ limit = 50, source = null } = {}) {
+      const rows = source
+        ? db.prepare("SELECT * FROM external_alerts WHERE source = ? ORDER BY received_at DESC LIMIT ?").all(source, limit)
+        : db.prepare("SELECT * FROM external_alerts ORDER BY received_at DESC LIMIT ?").all(limit);
+      return rows.map((r) => ({ ...r, data: r.data ? JSON.parse(r.data) : null }));
     },
 
     getState(key) {

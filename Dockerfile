@@ -10,6 +10,7 @@ COPY packages ./packages
 RUN npm ci --omit=dev
 
 COPY src ./src
+COPY scripts ./scripts
 
 # Fly mounts volumes owned by root. Start as root only to hand /data to the
 # node user, then drop privileges for the server process.
