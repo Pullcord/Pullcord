@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/v1/:path*", "destination": "https://pullcord-notify.fly.dev/v1/:path*" },
-    { "source": "/healthz", "destination": "https://pullcord-notify.fly.dev/healthz" }
+    { "source": "/healthz", "destination": "https://pullcord-notify.fly.dev/healthz" },
+    { "source": "/pitch", "destination": "/pitch/index.html" }
   ]
 }
