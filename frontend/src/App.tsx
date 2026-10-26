@@ -7,6 +7,7 @@ import { Wizard } from "./components/Wizard";
 import { NoticePreview } from "./components/NoticePreview";
 import { Manage } from "./components/Manage";
 import { Stats } from "./components/Stats";
+import { Alerts } from "./components/Alerts";
 
 export default function App() {
   const [sound, setSound] = useState(false); // apagado por defecto
@@ -24,6 +25,7 @@ export default function App() {
         <NoticePreview />
         <Manage />
         <Stats />
+        <Alerts />
       </main>
       <DemoNotice />
       <Footer />

@@ -31,9 +31,14 @@ export function Header() {
   return (
     <header className="absolute inset-x-0 top-0 z-20 px-4 py-3">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
-        <a href="#top" aria-label="pullcord, inicio">
-          <Logo />
-        </a>
+        <nav aria-label="Principal" className="flex items-center gap-5">
+          <a href="#top" aria-label="pullcord, inicio">
+            <Logo />
+          </a>
+          <a href="#alertas" className="inline-flex min-h-11 items-center font-semibold text-ink2 underline-offset-4 hover:text-ink hover:underline">
+            Alertas
+          </a>
+        </nav>
         <ThemeToggle />
       </div>
     </header>

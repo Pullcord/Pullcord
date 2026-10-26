@@ -92,3 +92,17 @@ export const deleteSubscription = (id: string, token: string) =>
   request<void>(`/v1/subscriptions/${encodeURIComponent(id)}`, { method: "DELETE", headers: bearer(token) });
 
 export const getStats = () => request<Stats>("/v1/subscriptions/stats");
+
+/** Alerta que mandó una fuente externa registrada (otra app). Sin datos personales. */
+export type ExternalAlert = {
+  id: string;
+  source: string;
+  type: string;
+  message: string;
+  severity: "info" | "warning" | "critical";
+  data: Record<string, unknown> | null;
+  received_at: string;
+};
+
+export const getExternalAlerts = (limit = 20) =>
+  request<{ alerts: ExternalAlert[] }>(`/v1/alerts/external?limit=${limit}`).then((b) => b.alerts);
