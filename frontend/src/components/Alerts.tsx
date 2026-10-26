@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { getExternalAlerts, type ExternalAlert } from "../api";
 
 const SEVERITY: Record<ExternalAlert["severity"], { label: string; color: string }> = {
@@ -45,11 +46,12 @@ function AlertItem({ a }: { a: ExternalAlert }) {
 export function Alerts() {
   const [alerts, setAlerts] = useState<ExternalAlert[] | null>(null);
   const [offline, setOffline] = useState(false);
+  const [showTests, setShowTests] = useState(false); // cerrado por defecto
 
   useEffect(() => {
     let alive = true;
     const load = () =>
-      getExternalAlerts().then(
+      getExternalAlerts(50).then(
         (list) => alive && (setAlerts(list), setOffline(false)),
         () => alive && setOffline(true),
       );
@@ -61,6 +63,10 @@ export function Alerts() {
     };
   }, []);
 
+  // Las pruebas nunca van mezcladas con las reales.
+  const real = alerts?.filter((a) => !isTest(a));
+  const tests = alerts?.filter(isTest);
+
   return (
     <section id="alertas" aria-labelledby="alerts-title" className="px-4 py-16">
       <div className="mx-auto max-w-3xl">
@@ -70,14 +76,27 @@ export function Alerts() {
           muestran aquí: todavía no se reenvían a nadie.
         </p>
         <div aria-live="polite">
-          {alerts && alerts.length > 0 && (
+          {real && real.length > 0 && (
             <ul className="mt-6 space-y-3">
-              {alerts.map((a) => (
+              {real.map((a) => (
                 <AlertItem key={a.id} a={a} />
               ))}
             </ul>
           )}
-          {alerts && alerts.length === 0 && <p className="card mt-6 p-5 text-ink2">Todavía no ha llegado ninguna alerta externa.</p>}
+          {real && real.length === 0 && <p className="card mt-6 p-5 text-ink2">Todavía no ha llegado ninguna alerta real.</p>}
+          {tests && tests.length > 0 && (
+            <div className="mt-6">
+              <button type="button" className="btn" aria-expanded={showTests} aria-controls="alertas-prueba" onClick={() => setShowTests(!showTests)}>
+                <ChevronDown size={18} aria-hidden style={{ transform: showTests ? "rotate(180deg)" : undefined }} />
+                {showTests ? "Ocultar" : "Mostrar"} {tests.length === 1 ? "1 alerta de prueba" : `${tests.length} alertas de prueba`}
+              </button>
+              <ul id="alertas-prueba" hidden={!showTests} className="mt-3 space-y-3">
+                {tests.map((a) => (
+                  <AlertItem key={a.id} a={a} />
+                ))}
+              </ul>
+            </div>
+          )}
           {!alerts && !offline && <p className="mt-6 text-ink2">Cargando…</p>}
           <p className="mt-3 text-sm" role="status" style={{ color: "var(--err)" }}>
             {offline ? "Sin conexión con la API." : ""}
