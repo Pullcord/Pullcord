@@ -80,10 +80,10 @@
         <h2>Qué avisa</h2>
         <ul class="points">
           <li><span class="tag tag-ok">Funciona</span> Un pago recibido en tu dirección, de cualquier activo.</li>
-          <li><span class="tag tag-ok">Funciona</span> Por webhook firmado. Telegram está construido, pero aún no activo en línea.</li>
+          <li><span class="tag tag-ok">Funciona</span> Por webhook firmado. Telegram: en vivo, probado con un pago real de testnet.</li>
           <li><span class="tag tag-next">Aún no existe</span> Cambios de código o de admin en un contrato, congelamientos y clawback.</li>
         </ul>
-        <aside class="notes" data-sec="19">Hoy Pullcord avisa una cosa: un pago recibido en tu dirección, de cualquier activo. Llega por webhook firmado. Telegram está construido, pero aún no activo en línea. Los avisos de cambios de contrato y congelamientos vienen después; todavía no existen.</aside>
+        <aside class="notes" data-sec="19">Hoy Pullcord avisa una cosa: un pago recibido en tu dirección, de cualquier activo. Llega por webhook firmado, y por Telegram: hoy lo probamos en vivo con un pago real de testnet. Los avisos de cambios de contrato y congelamientos vienen después; todavía no existen.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 5">
@@ -100,10 +100,10 @@
           </li>
           <li>
             <strong>Te llega el aviso</strong>
-            <span>Por webhook, firmado con HMAC para que nadie lo falsifique.</span>
+            <span>Por webhook firmado con HMAC, o por Telegram si vinculaste el bot con tu permiso.</span>
           </li>
         </ol>
-        <aside class="notes" data-sec="24">Tres pasos. Uno: firmas un permiso con tu wallet; es un mensaje, no mueve fondos, y si quieres lo registras en un contrato de Soroban y lo retiras cuando quieras. Dos: leemos los eventos de la red con Stellar RPC. Tres: te llega el aviso firmado, para que nadie lo falsifique.</aside>
+        <aside class="notes" data-sec="24">Tres pasos. Uno: firmas un permiso con tu wallet; es un mensaje, no mueve fondos, y si quieres lo registras en un contrato de Soroban y lo retiras cuando quieras. Dos: leemos los eventos de la red con Stellar RPC. Tres: te llega el aviso, por webhook firmado o por Telegram si vinculaste el bot.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 6">
@@ -126,9 +126,13 @@
             Hoy: pago real de testnet, aviso firmado en unos 4 s
             <a href="https://stellar.expert/explorer/testnet/tx/8b3b79b72eb484d647b41fac3d00befa7b9e9bd09843c2865718cbf5aaad6111" target="_blank" rel="noopener">pago 8b3b79b7…</a>
           </li>
+          <li>
+            Hoy: pago real de testnet entregado por Telegram, en segundos
+            <a href="https://stellar.expert/explorer/testnet/tx/416978b1db3629bf6bcca77d2116fbd1e513837a9a3125565ec331de065e3b6c" target="_blank" rel="noopener">pago 416978b1…</a>
+          </li>
         </ul>
         <p class="foot">Código abierto, Apache 2.0 · 40 pruebas del servidor y 8 del contrato · <a href="https://github.com/Pullcord/Pullcord" target="_blank" rel="noopener">github.com/Pullcord/Pullcord</a></p>
-        <aside class="notes" data-sec="21">Lo que ya funciona, y cualquiera puede revisarlo: sitio y API en línea en testnet; el contrato de consentimiento desplegado, con un registro y un retiro confirmados; y hoy en la madrugada, un pago real de testnet cuyo aviso firmado llegó en unos cuatro segundos.</aside>
+        <aside class="notes" data-sec="21">Lo que ya funciona, y cualquiera puede revisarlo: sitio y API en línea en testnet; el contrato de consentimiento desplegado, con un registro y un retiro confirmados; hoy en la madrugada, un pago real de testnet cuyo aviso firmado llegó en unos cuatro segundos; y hoy mismo, otro pago real que llegó por Telegram en segundos.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 7">
@@ -161,9 +165,9 @@
         <ul class="points">
           <li><span class="tag tag-next">Semanas 1 y 2</span> Primeros testers y prueba del permiso desde el navegador.</li>
           <li><span class="tag tag-next">Semanas 2 y 3</span> Aviso cuando un contrato cambia su código o su admin.</li>
-          <li><span class="tag tag-next">Semana 4</span> Paquete en npm y Telegram activo.</li>
+          <li><span class="tag tag-next">Semana 4</span> Paquete en npm.</li>
         </ul>
-        <aside class="notes" data-sec="19">Próximos treinta días: buscar a los primeros testers y probar el permiso desde el navegador; luego, avisos cuando un contrato cambia su código o su admin, porque el lector de eso ya existe; y publicar el paquete en npm y activar Telegram.</aside>
+        <aside class="notes" data-sec="19">Próximos treinta días: buscar a los primeros testers y probar el permiso desde el navegador; luego, avisos cuando un contrato cambia su código o su admin, porque el lector de eso ya existe; y publicar el paquete en npm.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 10">
