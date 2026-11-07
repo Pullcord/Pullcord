@@ -16,12 +16,9 @@ export function Manage() {
   const [confirming, setConfirming] = useState(false);
   const [deleted, setDeleted] = useState(false);
 
-  const view = async (e: FormEvent) => {
-    e.preventDefault();
+  const refresh = async () => {
     setBusy(true);
     setError(null);
-    setDeleted(false);
-    setConfirming(false);
     try {
       setSub(await getSubscription(id.trim(), token.trim()));
     } catch (err) {
@@ -30,6 +27,13 @@ export function Manage() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const view = async (e: FormEvent) => {
+    e.preventDefault();
+    setDeleted(false);
+    setConfirming(false);
+    await refresh();
   };
 
   const remove = async () => {
@@ -100,7 +104,7 @@ export function Manage() {
                 )}
               </dl>
             )}
-            {sub?.consent?.status === "Active" && <ConsentPanel address={sub.address} info={sub.consent} mode="revoke" />}
+            {sub?.consent?.status === "Active" && <ConsentPanel address={sub.address} info={sub.consent} mode="revoke" onSuccess={refresh} />}
           </div>
 
           {sub && (
