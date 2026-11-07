@@ -3,7 +3,8 @@
 Avísale a los usuarios de tu app cuando reciben un pago en Stellar, por webhook
 firmado o por Telegram. Pullcord solo avisa: nunca firma ni mueve fondos.
 
-No está publicado en npm todavía. Dentro de este repo se instala con
+Se instala con `npm install @pullcord/notify`. Dentro de este monorepo
+también se puede usar directo, sin publicar, con
 `npm install ./packages/notify`.
 
 ## Suscribirse
