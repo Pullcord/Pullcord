@@ -7,7 +7,17 @@ import { registerConsent, revokeConsent, type ConsentInfo, type ConsentResult } 
  * Consentimiento en cadena. `mode="register"` lo da; `mode="revoke"` lo retira.
  * Siempre lo firma el dueño de la dirección con Freighter. No mueve fondos.
  */
-export function ConsentPanel({ address, info, mode }: { address: string; info: ConsentInfo; mode: "register" | "revoke" }) {
+export function ConsentPanel({
+  address,
+  info,
+  mode,
+  onSuccess,
+}: {
+  address: string;
+  info: ConsentInfo;
+  mode: "register" | "revoke";
+  onSuccess?: () => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ConsentResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +31,9 @@ export function ConsentPanel({ address, info, mode }: { address: string; info: C
       if (!net.isTestnet) throw new Error("Freighter debe estar en Testnet.");
       const who = await connect();
       if (who !== address) throw new Error("Esa no es la wallet de la suscripción. Cambia de cuenta en Freighter.");
-      setResult(await (register ? registerConsent : revokeConsent)(address, info));
+      const r = await (register ? registerConsent : revokeConsent)(address, info);
+      setResult(r);
+      onSuccess?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "No pude completar la firma.");
     } finally {
