@@ -24,6 +24,7 @@ function fromHash() {
 }
 
 // Letrero LED de puntos 5x7, mismos glifos que src/components/LedSign.tsx (más la N).
+// Q y U son para la versión en inglés del letrero ("STOP REQUESTED").
 const FONT = {
   A: ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
   C: ["01110", "10001", "10000", "10000", "10000", "10001", "01110"],
@@ -34,9 +35,11 @@ const FONT = {
   N: ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
   O: ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
   P: ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+  Q: ["01110", "10001", "10001", "10001", "10101", "10010", "01101"],
   R: ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
   S: ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
   T: ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+  U: ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
   V: ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
 };
 const SVG = "http://www.w3.org/2000/svg";
@@ -68,10 +71,25 @@ function drawLed(el, lines, lit) {
   el.replaceChildren(svg);
 }
 
+// Idioma: español es el original del HTML; data-en lleva el inglés. Misma clave
+// que el sitio, así el pitch abre en el idioma que la persona eligió allá.
+const LANG_KEY = "pullcord-lang";
+let lang = "es";
+try {
+  if (localStorage.getItem(LANG_KEY) === "en") lang = "en";
+} catch {}
+const tr = (es, en) => (lang === "en" ? en : es);
+
+/** Líneas del letrero en el idioma vigente (data-on-en / data-off-en si existen). */
+function ledLines(el, on) {
+  const key = on ? "on" : "off";
+  return ((lang === "en" && el.dataset[`${key}En`]) || el.dataset[key]).split("|");
+}
+
 const leds = [...document.querySelectorAll(".led")];
 for (const el of leds) {
   const lit = el.dataset.lit === "1";
-  drawLed(el, (lit ? el.dataset.on : el.dataset.off).split("|"), lit);
+  drawLed(el, ledLines(el, lit), lit);
 }
 
 // La cuerda de la portada: jalarla (o Enter) enciende el letrero, como en el sitio.
@@ -81,10 +99,17 @@ const ring = document.querySelector(".rope-ring");
 const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let lit = false;
 
+function titleLedLabel() {
+  titleLed.setAttribute(
+    "aria-label",
+    lit ? tr("Letrero: aviso solicitado", "Sign: alert requested") : tr("Letrero: parada solicitada, apagado", "Sign: stop requested, off"),
+  );
+}
+
 function pullCord() {
   lit = !lit;
-  drawLed(titleLed, (lit ? titleLed.dataset.on : titleLed.dataset.off).split("|"), lit);
-  titleLed.setAttribute("aria-label", lit ? "Letrero: aviso solicitado" : "Letrero: parada solicitada, apagado");
+  drawLed(titleLed, ledLines(titleLed, lit), lit);
+  titleLedLabel();
 }
 
 let drag = null;
@@ -118,8 +143,9 @@ ring.addEventListener("click", () => {
   dragged = false;
 });
 
-// Tema: mismo interruptor y misma clave que el sitio.
-document.querySelector(".theme").addEventListener("click", () => {
+// Tema: mismo interruptor y misma clave que el sitio. (.theme también la lleva
+// el botón de idioma por el estilo; por eso se excluye .lang.)
+document.querySelector(".theme:not(.lang)").addEventListener("click", () => {
   const root = document.documentElement;
   const current = root.dataset.theme || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   const nextTheme = current === "light" ? "dark" : "light";
@@ -142,7 +168,10 @@ function show(i) {
   cur.textContent = String(index + 1);
   if (location.hash !== `#${index + 1}`) history.replaceState(null, "", `#${index + 1}`);
   const upTo = secs.slice(0, index + 1).reduce((a, b) => a + b, 0);
-  meta.textContent = `Diapositiva ${index + 1} de ${total} · ~${secs[index]} s · acumulado ${fmt(upTo)} de ${fmt(totalSecs)}`;
+  meta.textContent = tr(
+    `Diapositiva ${index + 1} de ${total} · ~${secs[index]} s · acumulado ${fmt(upTo)} de ${fmt(totalSecs)}`,
+    `Slide ${index + 1} of ${total} · ~${secs[index]} s · running total ${fmt(upTo)} of ${fmt(totalSecs)}`,
+  );
   text.textContent = slides[index].querySelector(".notes")?.textContent.trim() ?? "";
 }
 
@@ -211,5 +240,40 @@ document.addEventListener("touchend", (e) => {
   }
 }, { passive: true });
 
+// ---------- Idioma ----------
+const textEls = [...document.querySelectorAll("[data-en]")];
+for (const el of textEls) el.dataset.es = el.innerHTML;
+const labelEls = [...document.querySelectorAll("[data-en-label]")];
+for (const el of labelEls) el.dataset.esLabel = el.getAttribute("aria-label") || "";
+const metaDesc = document.querySelector('meta[name="description"]');
+const descEs = metaDesc?.getAttribute("content") || "";
+const langBtn = document.querySelector(".lang");
+
+function applyLang() {
+  const en = lang === "en";
+  document.documentElement.lang = lang;
+  for (const el of textEls) el.innerHTML = en ? el.dataset.en : el.dataset.es;
+  for (const el of labelEls) el.setAttribute("aria-label", en ? el.dataset.enLabel : el.dataset.esLabel);
+  slides.forEach((s, k) => s.setAttribute("aria-label", `${tr("Diapositiva", "Slide")} ${k + 1}`));
+  metaDesc?.setAttribute("content", en ? metaDesc.dataset.enContent : descEs);
+  langBtn.querySelector(".lang-label").textContent = en ? "ES" : "EN";
+  langBtn.setAttribute("aria-label", en ? "Switch the pitch to Spanish" : "Cambiar el pitch a inglés");
+  for (const el of leds) {
+    const on = el === titleLed ? lit : el.dataset.lit === "1";
+    drawLed(el, ledLines(el, on), on);
+  }
+  titleLedLabel();
+  show(index);
+}
+
+langBtn.addEventListener("click", () => {
+  lang = lang === "en" ? "es" : "en";
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch {}
+  applyLang();
+});
+
 window.addEventListener("hashchange", () => show(fromHash()));
-show(fromHash());
+index = fromHash();
+applyLang();

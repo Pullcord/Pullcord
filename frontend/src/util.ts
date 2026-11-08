@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { tr } from "./i18n";
 
 export const shortAddr = (a: string) => (a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a);
 
@@ -40,9 +41,9 @@ export function webhookProblem(v: string): string | null {
   try {
     u = new URL(v);
   } catch {
-    return "Eso no parece una URL. Ejemplo: https://webhook.site/tu-id";
+    return tr("Eso no parece una URL. Ejemplo: https://webhook.site/tu-id", "That doesn't look like a URL. Example: https://webhook.site/your-id");
   }
-  if (u.protocol !== "https:") return "Debe empezar con https://";
-  if (u.username || u.password) return "No puede llevar usuario ni contraseña.";
+  if (u.protocol !== "https:") return tr("Debe empezar con https://", "It must start with https://");
+  if (u.username || u.password) return tr("No puede llevar usuario ni contraseña.", "It can't include a username or password.");
   return null;
 }
