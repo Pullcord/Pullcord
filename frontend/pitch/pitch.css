@@ -104,6 +104,7 @@ body[data-slide="1"] .brand { opacity: 0; }
   border-radius: 0.6em; border: 1px solid var(--control); background: var(--surface); color: var(--text);
 }
 .theme svg { width: 55%; height: 55%; }
+.lang-label { font-family: var(--font-mono); font-weight: 700; font-size: 0.85em; letter-spacing: 0.04em; }
 .icon-sun { display: none; }
 :root[data-theme="light"] .icon-moon { display: none; }
 :root[data-theme="light"] .icon-sun { display: block; }

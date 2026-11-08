@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="description" content="Pitch de Pullcord para el Demo Day: avisos de pago para direcciones de Stellar. Solo avisa, nunca mueve fondos. Solo testnet." />
+    <meta name="description" content="Pitch de Pullcord para el Demo Day: avisos de pago para direcciones de Stellar. Solo avisa, nunca mueve fondos. Solo testnet." data-en-content="Pullcord's Demo Day pitch: payment alerts for Stellar addresses. It only notifies, it never moves funds. Testnet only." />
     <meta name="theme-color" content="#0B0D12" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Pullcord · Demo Day</title>
@@ -11,11 +11,19 @@
       try {
         var t = localStorage.getItem("pullcord-theme");
         if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        var l = localStorage.getItem("pullcord-lang");
+        if (l === "en" || l === "es") document.documentElement.lang = l;
       } catch (e) {}
     </script>
     <script type="module" src="./pitch.js"></script>
   </head>
   <body>
+    <!--
+      Idioma: cada texto traducible lleva su versión en inglés en data-en (HTML)
+      o data-en-label (aria-label). El español es el contenido original del
+      elemento; pitch.js cambia entre los dos con el botón ES/EN y guarda la
+      elección en la misma clave que el sitio (pullcord-lang).
+    -->
     <div class="progress" aria-hidden="true"><div class="progress-bar"></div></div>
 
     <header class="brand" aria-label="Pullcord">
@@ -32,8 +40,8 @@
       <section class="slide slide-title" aria-label="Diapositiva 1">
         <div class="rope">
           <div class="rope-line" aria-hidden="true"></div>
-          <button type="button" class="rope-ring" aria-label="Jalar la cuerda: enciende el letrero. Con teclado: Enter"><span aria-hidden="true"></span></button>
-          <span class="rope-label" aria-hidden="true">Jala hacia abajo</span>
+          <button type="button" class="rope-ring" aria-label="Jalar la cuerda: enciende el letrero. Con teclado: Enter" data-en-label="Pull the cord: it lights the sign. With the keyboard: Enter"><span aria-hidden="true"></span></button>
+          <span class="rope-label" aria-hidden="true" data-en="Pull down">Jala hacia abajo</span>
         </div>
         <div class="title-text">
           <p class="wordmark">
@@ -45,155 +53,156 @@
             </svg>
             <span>pullcord</span>
           </p>
-          <h1>Jala la cuerda una vez.<br /><span class="accent">Te avisan cuando llegue un pago.</span></h1>
-          <p class="sub">Solo avisa. Nunca mueve fondos. Hoy, solo en testnet.</p>
-          <div class="led led-title" data-off="PARADA|SOLICITADA" data-on="AVISO|SOLICITADO" role="img" aria-label="Letrero: parada solicitada, apagado"></div>
-          <p class="hint"><span class="hint-desk">← → avanzar · F pantalla completa · N notas</span><span class="hint-touch">Desliza para avanzar</span></p>
+          <h1 data-en='Pull the cord once.<br /><span class="accent">You get notified when a payment arrives.</span>'>Jala la cuerda una vez.<br /><span class="accent">Te avisan cuando llegue un pago.</span></h1>
+          <p class="sub" data-en="It only notifies. It never moves funds. Today, testnet only.">Solo avisa. Nunca mueve fondos. Hoy, solo en testnet.</p>
+          <div class="led led-title" data-off="PARADA|SOLICITADA" data-on="AVISO|SOLICITADO" data-off-en="STOP|REQUESTED" data-on-en="ALERT|REQUESTED" role="img" aria-label="Letrero: parada solicitada, apagado"></div>
+          <p class="hint"><span class="hint-desk" data-en="← → next · F full screen · N notes">← → avanzar · F pantalla completa · N notas</span><span class="hint-touch" data-en="Swipe to advance">Desliza para avanzar</span></p>
         </div>
-        <aside class="notes" data-sec="13">[Jala la cuerda] Hola, somos Giovanny y Monse, y esto es Pullcord. En una frase: te avisa cuando llega un pago a tu dirección de Stellar. Solo avisa; nunca toca tu dinero.</aside>
+        <aside class="notes" data-sec="13" data-en="[Pull the cord] Hi, we're Giovanny and Monse, and this is Pullcord. In one sentence: it tells you when a payment reaches your Stellar address. It only notifies; it never touches your money.">[Jala la cuerda] Hola, somos Giovanny y Monse, y esto es Pullcord. En una frase: te avisa cuando llega un pago a tu dirección de Stellar. Solo avisa; nunca toca tu dinero.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 2">
-        <p class="kicker">El problema</p>
-        <h2>Lo que pasa con tu dinero, lo sabes tarde</h2>
+        <p class="kicker" data-en="The problem">El problema</p>
+        <h2 data-en="You find out late about what happens to your money">Lo que pasa con tu dinero, lo sabes tarde</h2>
         <ul class="points">
-          <li>Te pagan y te enteras hasta que abres tu wallet.</li>
-          <li>Un contrato donde tienes dinero puede cambiar su código o su admin. Un emisor puede congelar su activo.</li>
-          <li>Cada app que quiere avisar construye su propio monitor.</li>
+          <li data-en="You get paid and only find out when you open your wallet.">Te pagan y te enteras hasta que abres tu wallet.</li>
+          <li data-en="A contract holding your money can change its code or its admin. An issuer can freeze its asset.">Un contrato donde tienes dinero puede cambiar su código o su admin. Un emisor puede congelar su activo.</li>
+          <li data-en="Every app that wants to notify builds its own monitor.">Cada app que quiere avisar construye su propio monitor.</li>
         </ul>
-        <aside class="notes" data-sec="24">Hoy, si te pagan en Stellar, te enteras hasta que abres tu wallet. Y hay cosas más serias que pasan en silencio: un contrato donde tienes dinero puede cambiar su código o su admin, y el emisor de un activo puede congelarlo. Cada app que quiere avisar construye su propio monitor.</aside>
+        <aside class="notes" data-sec="24" data-en="Today, if you get paid on Stellar, you only find out when you open your wallet. And more serious things happen silently: a contract holding your money can change its code or its admin, and an asset's issuer can freeze it. Every app that wants to notify builds its own monitor.">Hoy, si te pagan en Stellar, te enteras hasta que abres tu wallet. Y hay cosas más serias que pasan en silencio: un contrato donde tienes dinero puede cambiar su código o su admin, y el emisor de un activo puede congelarlo. Cada app que quiere avisar construye su propio monitor.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 3">
-        <p class="kicker">Para quién</p>
-        <h2>Dos personas</h2>
+        <p class="kicker" data-en="Who it's for">Para quién</p>
+        <h2 data-en="Two people">Dos personas</h2>
         <ul class="points">
-          <li>Equipos que construyen apps y wallets en Stellar.</li>
-          <li>Las personas que usan esas apps.</li>
-          <li class="honest">Hoy no tenemos usuarios ni clientes. Buscamos a los primeros testers.</li>
+          <li data-en="Teams building apps and wallets on Stellar.">Equipos que construyen apps y wallets en Stellar.</li>
+          <li data-en="The people who use those apps.">Las personas que usan esas apps.</li>
+          <li class="honest" data-en="Today we have no users or customers. We're looking for the first testers.">Hoy no tenemos usuarios ni clientes. Buscamos a los primeros testers.</li>
         </ul>
-        <aside class="notes" data-sec="15">Pensamos en dos personas: los equipos que construyen apps y wallets en Stellar, y quienes usan esas apps. Hoy no tenemos usuarios ni clientes. Estamos buscando a los primeros que lo prueben.</aside>
+        <aside class="notes" data-sec="15" data-en="We think about two people: the teams building apps and wallets on Stellar, and the people who use those apps. Today we have no users or customers. We're looking for the first people to try it.">Pensamos en dos personas: los equipos que construyen apps y wallets en Stellar, y quienes usan esas apps. Hoy no tenemos usuarios ni clientes. Estamos buscando a los primeros que lo prueben.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 4">
-        <p class="kicker">La solución</p>
-        <h2>Qué avisa</h2>
+        <p class="kicker" data-en="The solution">La solución</p>
+        <h2 data-en="What it notifies">Qué avisa</h2>
         <ul class="points">
-          <li><span class="tag tag-ok">Funciona</span> Un pago recibido en tu dirección, de cualquier activo.</li>
-          <li><span class="tag tag-ok">Funciona</span> Por webhook firmado. Telegram: en vivo, probado con un pago real de testnet.</li>
-          <li><span class="tag tag-next">Aún no existe</span> Cambios de código o de admin en un contrato, congelamientos y clawback.</li>
+          <li data-en='<span class="tag tag-ok">Works</span> A payment received at your address, in any asset.'><span class="tag tag-ok">Funciona</span> Un pago recibido en tu dirección, de cualquier activo.</li>
+          <li data-en='<span class="tag tag-ok">Works</span> By signed webhook. Telegram: live, tested with a real testnet payment.'><span class="tag tag-ok">Funciona</span> Por webhook firmado. Telegram: en vivo, probado con un pago real de testnet.</li>
+          <li data-en='<span class="tag tag-next">Doesn&#39;t exist yet</span> Code or admin changes on a contract, freezes and clawback.'><span class="tag tag-next">Aún no existe</span> Cambios de código o de admin en un contrato, congelamientos y clawback.</li>
         </ul>
-        <aside class="notes" data-sec="19">Hoy Pullcord avisa una cosa: un pago recibido en tu dirección, de cualquier activo. Llega por webhook firmado, y por Telegram: hoy lo probamos en vivo con un pago real de testnet. Los avisos de cambios de contrato y congelamientos vienen después; todavía no existen.</aside>
+        <aside class="notes" data-sec="19" data-en="Today Pullcord notifies one thing: a payment received at your address, in any asset. It arrives by signed webhook, and by Telegram: today we tested it live with a real testnet payment. Alerts for contract changes and freezes come later; they don't exist yet.">Hoy Pullcord avisa una cosa: un pago recibido en tu dirección, de cualquier activo. Llega por webhook firmado, y por Telegram: hoy lo probamos en vivo con un pago real de testnet. Los avisos de cambios de contrato y congelamientos vienen después; todavía no existen.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 5">
-        <p class="kicker">Cómo funciona</p>
-        <h2>Tres pasos</h2>
+        <p class="kicker" data-en="How it works">Cómo funciona</p>
+        <h2 data-en="Three steps">Tres pasos</h2>
         <ol class="steps">
           <li>
-            <strong>Firmas un permiso</strong>
-            <span>Con tu wallet (SEP-53). Es un mensaje: no mueve fondos. Opcional: lo registras en un contrato de Soroban y lo retiras cuando quieras.</span>
+            <strong data-en="You sign a permission">Firmas un permiso</strong>
+            <span data-en="With your wallet (SEP-53). It's a message: it doesn't move funds. Optional: you register it in a Soroban contract and revoke it whenever you want.">Con tu wallet (SEP-53). Es un mensaje: no mueve fondos. Opcional: lo registras en un contrato de Soroban y lo retiras cuando quieras.</span>
           </li>
           <li>
-            <strong>Leemos la red</strong>
-            <span>Los eventos de pago, con Stellar RPC (getEvents).</span>
+            <strong data-en="We read the network">Leemos la red</strong>
+            <span data-en="Payment events, with Stellar RPC (getEvents).">Los eventos de pago, con Stellar RPC (getEvents).</span>
           </li>
           <li>
-            <strong>Te llega el aviso</strong>
-            <span>Por webhook firmado con HMAC, o por Telegram si vinculaste el bot con tu permiso.</span>
+            <strong data-en="You get the alert">Te llega el aviso</strong>
+            <span data-en="By HMAC-signed webhook, or by Telegram if you linked the bot with your permission.">Por webhook firmado con HMAC, o por Telegram si vinculaste el bot con tu permiso.</span>
           </li>
         </ol>
-        <aside class="notes" data-sec="24">Tres pasos. Uno: firmas un permiso con tu wallet; es un mensaje, no mueve fondos, y si quieres lo registras en un contrato de Soroban y lo retiras cuando quieras. Dos: leemos los eventos de la red con Stellar RPC. Tres: te llega el aviso, por webhook firmado o por Telegram si vinculaste el bot.</aside>
+        <aside class="notes" data-sec="24" data-en="Three steps. One: you sign a permission with your wallet; it's a message, it doesn't move funds, and if you want you register it in a Soroban contract and revoke it whenever you want. Two: we read the network's events with Stellar RPC. Three: you get the alert, by signed webhook or by Telegram if you linked the bot.">Tres pasos. Uno: firmas un permiso con tu wallet; es un mensaje, no mueve fondos, y si quieres lo registras en un contrato de Soroban y lo retiras cuando quieras. Dos: leemos los eventos de la red con Stellar RPC. Tres: te llega el aviso, por webhook firmado o por Telegram si vinculaste el bot.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 6">
-        <p class="kicker">Pruebas que cualquiera puede abrir · testnet</p>
-        <h2>Ya funciona</h2>
+        <p class="kicker" data-en="Proof anyone can open · testnet">Pruebas que cualquiera puede abrir · testnet</p>
+        <h2 data-en="It already works">Ya funciona</h2>
         <ul class="points proofs">
           <li>
-            Sitio y API en línea
+            <span data-en="Site and API online">Sitio y API en línea</span>
             <a href="https://www.pullcord.xyz/healthz" target="_blank" rel="noopener">pullcord.xyz/healthz</a>
           </li>
           <li>
-            Contrato de consentimiento: registro y retiro confirmados
+            <span data-en="Consent contract: registration and revocation confirmed">Contrato de consentimiento: registro y retiro confirmados</span>
             <span class="links">
-              <a href="https://stellar.expert/explorer/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA" target="_blank" rel="noopener">contrato CBAU…ZJAA</a>
-              <a href="https://stellar.expert/explorer/testnet/tx/9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a" target="_blank" rel="noopener">registro 9366d289…</a>
-              <a href="https://stellar.expert/explorer/testnet/tx/3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7" target="_blank" rel="noopener">retiro 3a2994a6…</a>
+              <a href="https://stellar.expert/explorer/testnet/contract/CBAU7N2YV5PHA6LJHFUJKW6J5GFEJAGMYBQFOOEYVJJSQBWV6R7VZJAA" target="_blank" rel="noopener" data-en="contract CBAU…ZJAA">contrato CBAU…ZJAA</a>
+              <a href="https://stellar.expert/explorer/testnet/tx/9366d289367392cf62401518f522614feb23fc9d884fdd42d8d1c1c55f63596a" target="_blank" rel="noopener" data-en="registration 9366d289…">registro 9366d289…</a>
+              <a href="https://stellar.expert/explorer/testnet/tx/3a2994a60a6cf73489e4711cc19fd6a91412541cb65ca8614405010b1b5aa8c7" target="_blank" rel="noopener" data-en="revocation 3a2994a6…">retiro 3a2994a6…</a>
             </span>
           </li>
           <li>
-            Hoy: pago real de testnet, aviso firmado en unos 4 s
-            <a href="https://stellar.expert/explorer/testnet/tx/8b3b79b72eb484d647b41fac3d00befa7b9e9bd09843c2865718cbf5aaad6111" target="_blank" rel="noopener">pago 8b3b79b7…</a>
+            <span data-en="Today: real testnet payment, signed alert in about 4 s">Hoy: pago real de testnet, aviso firmado en unos 4 s</span>
+            <a href="https://stellar.expert/explorer/testnet/tx/8b3b79b72eb484d647b41fac3d00befa7b9e9bd09843c2865718cbf5aaad6111" target="_blank" rel="noopener" data-en="payment 8b3b79b7…">pago 8b3b79b7…</a>
           </li>
           <li>
-            Hoy: pago real de testnet entregado por Telegram, en segundos
-            <a href="https://stellar.expert/explorer/testnet/tx/416978b1db3629bf6bcca77d2116fbd1e513837a9a3125565ec331de065e3b6c" target="_blank" rel="noopener">pago 416978b1…</a>
+            <span data-en="Today: real testnet payment delivered by Telegram, within seconds">Hoy: pago real de testnet entregado por Telegram, en segundos</span>
+            <a href="https://stellar.expert/explorer/testnet/tx/416978b1db3629bf6bcca77d2116fbd1e513837a9a3125565ec331de065e3b6c" target="_blank" rel="noopener" data-en="payment 416978b1…">pago 416978b1…</a>
           </li>
         </ul>
-        <p class="foot">Código abierto, Apache 2.0 · 40 pruebas del servidor y 8 del contrato · <a href="https://github.com/Pullcord/Pullcord" target="_blank" rel="noopener">github.com/Pullcord/Pullcord</a></p>
-        <aside class="notes" data-sec="21">Lo que ya funciona, y cualquiera puede revisarlo: sitio y API en línea en testnet; el contrato de consentimiento desplegado, con un registro y un retiro confirmados; hoy en la madrugada, un pago real de testnet cuyo aviso firmado llegó en unos cuatro segundos; y hoy mismo, otro pago real que llegó por Telegram en segundos.</aside>
+        <p class="foot" data-en='Open source, Apache 2.0 · 40 server tests and 8 contract tests · <a href="https://github.com/Pullcord/Pullcord" target="_blank" rel="noopener">github.com/Pullcord/Pullcord</a>'>Código abierto, Apache 2.0 · 40 pruebas del servidor y 8 del contrato · <a href="https://github.com/Pullcord/Pullcord" target="_blank" rel="noopener">github.com/Pullcord/Pullcord</a></p>
+        <aside class="notes" data-sec="21" data-en="What already works, and anyone can check it: site and API online on testnet; the consent contract deployed, with a confirmed registration and revocation; early this morning, a real testnet payment whose signed alert arrived in about four seconds; and today, another real payment that arrived by Telegram within seconds.">Lo que ya funciona, y cualquiera puede revisarlo: sitio y API en línea en testnet; el contrato de consentimiento desplegado, con un registro y un retiro confirmados; hoy en la madrugada, un pago real de testnet cuyo aviso firmado llegó en unos cuatro segundos; y hoy mismo, otro pago real que llegó por Telegram en segundos.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 7">
-        <div class="led led-small" data-on="EN VIVO" data-lit="1" role="img" aria-label="Letrero: en vivo"></div>
-        <p class="kicker">Demo · 2 min · testnet</p>
-        <h2>Lo que van a ver</h2>
+        <div class="led led-small" data-on="EN VIVO" data-on-en="LIVE" data-lit="1" role="img" aria-label="Letrero: en vivo" data-en-label="Sign: live"></div>
+        <p class="kicker" data-en="Demo · 2 min · testnet">Demo · 2 min · testnet</p>
+        <h2 data-en="What you're about to see">Lo que van a ver</h2>
         <ol class="steps steps-compact">
-          <li><strong>Me suscribo con Freighter</strong></li>
-          <li><strong>Mando 1 XLM de testnet</strong></li>
-          <li><strong>Llega el aviso firmado</strong></li>
+          <li><strong data-en="I subscribe with Freighter">Me suscribo con Freighter</strong></li>
+          <li><strong data-en="I send 1 testnet XLM">Mando 1 XLM de testnet</strong></li>
+          <li><strong data-en="The signed alert arrives">Llega el aviso firmado</strong></li>
         </ol>
-        <aside class="notes" data-sec="9">Ahora lo van a ver en vivo, en testnet: me suscribo con mi wallet, mando un pago y llega el aviso.</aside>
+        <aside class="notes" data-sec="9" data-en="Now you'll see it live, on testnet: I subscribe with my wallet, send a payment and the alert arrives.">Ahora lo van a ver en vivo, en testnet: me suscribo con mi wallet, mando un pago y llega el aviso.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 8">
-        <p class="kicker">Por qué es distinto</p>
-        <h2>Qué ponemos al centro</h2>
-        <p class="context">Ya existen herramientas de alertas y monitoreo en Stellar.</p>
+        <p class="kicker" data-en="Why it's different">Por qué es distinto</p>
+        <h2 data-en="What we put at the center">Qué ponemos al centro</h2>
+        <p class="context" data-en="Alerting and monitoring tools already exist on Stellar.">Ya existen herramientas de alertas y monitoreo en Stellar.</p>
         <ul class="points">
-          <li>Solo avisa: nunca mueve fondos ni pide tus llaves.</li>
-          <li>Tu permiso se verifica en la cadena y lo puedes retirar.</li>
-          <li>Código abierto: cualquiera lo puede revisar.</li>
+          <li data-en="It only notifies: it never moves funds or asks for your keys.">Solo avisa: nunca mueve fondos ni pide tus llaves.</li>
+          <li data-en="Your permission is verified on-chain and you can revoke it.">Tu permiso se verifica en la cadena y lo puedes retirar.</li>
+          <li data-en="Open source: anyone can review it.">Código abierto: cualquiera lo puede revisar.</li>
         </ul>
-        <aside class="notes" data-sec="19">Ya existen herramientas de alertas y monitoreo en Stellar. Lo que nosotros ponemos al centro son tres cosas: solo avisamos, nunca movemos fondos ni pedimos tus llaves; tu permiso se puede verificar en la cadena y retirar; y el código es abierto.</aside>
+        <aside class="notes" data-sec="19" data-en="Alerting and monitoring tools already exist on Stellar. What we put at the center are three things: we only notify, we never move funds or ask for your keys; your permission can be verified on-chain and revoked; and the code is open.">Ya existen herramientas de alertas y monitoreo en Stellar. Lo que nosotros ponemos al centro son tres cosas: solo avisamos, nunca movemos fondos ni pedimos tus llaves; tu permiso se puede verificar en la cadena y retirar; y el código es abierto.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 9">
-        <p class="kicker">Próximos 30 días</p>
-        <h2>Lo que sigue</h2>
+        <p class="kicker" data-en="Next 30 days">Próximos 30 días</p>
+        <h2 data-en="What's next">Lo que sigue</h2>
         <ul class="points">
-          <li><span class="tag tag-next">Semanas 1 y 2</span> Primeros testers y prueba del permiso desde el navegador.</li>
-          <li><span class="tag tag-next">Semanas 2 y 3</span> Aviso cuando un contrato cambia su código o su admin.</li>
-          <li><span class="tag tag-next">Semana 4</span> Paquete en npm.</li>
+          <li data-en='<span class="tag tag-next">Weeks 1 and 2</span> First testers and testing the permission from the browser.'><span class="tag tag-next">Semanas 1 y 2</span> Primeros testers y prueba del permiso desde el navegador.</li>
+          <li data-en='<span class="tag tag-next">Weeks 2 and 3</span> Alert when a contract changes its code or its admin.'><span class="tag tag-next">Semanas 2 y 3</span> Aviso cuando un contrato cambia su código o su admin.</li>
+          <li data-en='<span class="tag tag-next">Week 4</span> Package on npm.'><span class="tag tag-next">Semana 4</span> Paquete en npm.</li>
         </ul>
-        <aside class="notes" data-sec="19">Próximos treinta días: buscar a los primeros testers y probar el permiso desde el navegador; luego, avisos cuando un contrato cambia su código o su admin, porque el lector de eso ya existe; y publicar el paquete en npm.</aside>
+        <aside class="notes" data-sec="19" data-en="Next thirty days: find the first testers and test the permission from the browser; then, alerts when a contract changes its code or its admin, because the reader for that already exists; and publish the package on npm.">Próximos treinta días: buscar a los primeros testers y probar el permiso desde el navegador; luego, avisos cuando un contrato cambia su código o su admin, porque el lector de eso ya existe; y publicar el paquete en npm.</aside>
       </section>
 
       <section class="slide" aria-label="Diapositiva 10">
-        <p class="kicker">Equipo</p>
-        <h2>Lo que pedimos</h2>
-        <p class="team"><strong>Giovanny Amador</strong> · contrato y servidor &nbsp; <strong>Monserrat Mendoza</strong> · sitio y demo</p>
+        <p class="kicker" data-en="Team">Equipo</p>
+        <h2 data-en="What we're asking for">Lo que pedimos</h2>
+        <p class="team" data-en="<strong>Giovanny Amador</strong> · contract and server &nbsp; <strong>Monserrat Mendoza</strong> · site and demo"><strong>Giovanny Amador</strong> · contrato y servidor &nbsp; <strong>Monserrat Mendoza</strong> · sitio y demo</p>
         <ul class="points">
-          <li>Su feedback.</li>
-          <li>Equipos que quieran ser los primeros en probarlo.</li>
-          <li>Orientación para el siguiente paso con el Stellar Community Fund.</li>
+          <li data-en="Your feedback.">Su feedback.</li>
+          <li data-en="Teams that want to be the first to try it.">Equipos que quieran ser los primeros en probarlo.</li>
+          <li data-en="Guidance for the next step with the Stellar Community Fund.">Orientación para el siguiente paso con el Stellar Community Fund.</li>
         </ul>
         <p class="foot"><a href="https://www.pullcord.xyz" target="_blank" rel="noopener">pullcord.xyz</a> · <a href="https://github.com/Pullcord/Pullcord" target="_blank" rel="noopener">github.com/Pullcord/Pullcord</a></p>
-        <aside class="notes" data-sec="15">Somos Giovanny, contrato y servidor, y Monse, sitio y demo. Les pedimos su feedback, equipos que quieran probarlo primero, y orientación para el siguiente paso con el Stellar Community Fund. Gracias.</aside>
+        <aside class="notes" data-sec="15" data-en="We're Giovanny, contract and server, and Monse, site and demo. We're asking for your feedback, teams that want to try it first, and guidance for the next step with the Stellar Community Fund. Thank you.">Somos Giovanny, contrato y servidor, y Monse, sitio y demo. Les pedimos su feedback, equipos que quieran probarlo primero, y orientación para el siguiente paso con el Stellar Community Fund. Gracias.</aside>
       </section>
     </main>
 
     <div class="testnet" aria-hidden="true">TESTNET</div>
     <div class="bottom-right">
-      <button type="button" class="theme" aria-label="Cambiar entre tema claro y oscuro">
+      <button type="button" class="theme lang" aria-label="Cambiar el pitch a inglés"><span class="lang-label">EN</span></button>
+      <button type="button" class="theme" aria-label="Cambiar entre tema claro y oscuro" data-en-label="Switch between light and dark theme">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" /></svg>
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
       </button>
       <div class="counter" aria-live="off"><span class="counter-cur">1</span> / <span class="counter-total">10</span></div>
     </div>
 
-    <div class="notes-panel" hidden role="region" aria-label="Notas del orador">
+    <div class="notes-panel" hidden role="region" aria-label="Notas del orador" data-en-label="Speaker notes">
       <div class="notes-meta"></div>
       <p class="notes-text"></p>
     </div>

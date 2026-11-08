@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from "motion/react";
 import { Volume2, VolumeX } from "lucide-react";
 import { LedSign } from "./LedSign";
 import { useReducedMotion } from "../util";
+import { useLang } from "../i18n";
 
 const ROPE_BASE = 150; // largo de la cuerda en reposo
 const PULL_AT = 60; // cuánto hay que jalar para que cuente
@@ -30,6 +31,7 @@ export function ding() {
 
 export function Hero({ sound, setSound }: { sound: boolean; setSound: (v: boolean) => void }) {
   const reduced = useReducedMotion();
+  const { L } = useLang();
   const [lit, setLit] = useState(false);
   const y = useMotionValue(0);
   const lineH = useTransform(y, (v) => ROPE_BASE + v);
@@ -48,16 +50,22 @@ export function Hero({ sound, setSound }: { sound: boolean; setSound: (v: boolea
       <div className="mx-auto grid w-full max-w-6xl items-center gap-10 md:grid-cols-[1fr_auto]">
         <div className="pr-20 md:pr-0">
           <h1 id="hero-title" className="text-4xl font-bold sm:text-5xl lg:text-6xl">
-            Jala la cuerda una vez.
+            {L("Jala la cuerda una vez.", "Pull the cord once.")}
             <br />
-            <span className="text-signal-text">Te avisan cuando llegue un pago.</span>
+            <span className="text-signal-text">{L("Te avisan cuando llegue un pago.", "You get notified when a payment arrives.")}</span>
           </h1>
           <p className="mt-5 max-w-xl text-lg text-ink2">
-            Pullcord es una capa de avisos para apps de Stellar. Una app suma un paquete chico y tú recibes un mensaje cuando tu dirección recibe un
-            pago.
+            {L(
+              "Pullcord es una capa de avisos para apps de Stellar. Una app suma un paquete chico y tú recibes un mensaje cuando tu dirección recibe un pago.",
+              "Pullcord is a notification layer for Stellar apps. An app adds a small package and you get a message when your address receives a payment.",
+            )}
           </p>
           <ul className="mt-6 space-y-2 text-base">
-            {["Solo avisa, nunca mueve fondos", "Tú firmas el permiso con tu wallet", "Telegram o webhook firmado"].map((t) => (
+            {[
+              L("Solo avisa, nunca mueve fondos", "It only notifies, it never moves funds"),
+              L("Tú firmas el permiso con tu wallet", "You sign the permission with your wallet"),
+              L("Telegram o webhook firmado", "Telegram or a signed webhook"),
+            ].map((t) => (
               <li key={t} className="flex items-center gap-3">
                 <span className="h-2 w-2 shrink-0 rounded-full bg-signal" aria-hidden />
                 {t}
@@ -65,15 +73,19 @@ export function Hero({ sound, setSound }: { sound: boolean; setSound: (v: boolea
             ))}
           </ul>
           <div className="mt-8" aria-live="polite">
-            <LedSign lines={lit ? ["AVISO", "SOLICITADO"] : ["PARADA", "SOLICITADA"]} lit={lit} label={lit ? "Aviso solicitado" : "Parada solicitada, apagado"} />
+            <LedSign
+              lines={lit ? L("AVISO|SOLICITADO", "ALERT|REQUESTED").split("|") : L("PARADA|SOLICITADA", "STOP|REQUESTED").split("|")}
+              lit={lit}
+              label={lit ? L("Aviso solicitado", "Alert requested") : L("Parada solicitada, apagado", "Stop requested, off")}
+            />
           </div>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <a href="#suscribir" className="btn btn-primary">
-              Ir a suscribirme
+              {L("Ir a suscribirme", "Subscribe")}
             </a>
             <button type="button" className="btn" aria-pressed={sound} onClick={() => setSound(!sound)}>
               {sound ? <Volume2 size={18} aria-hidden /> : <VolumeX size={18} aria-hidden />}
-              Sonido: {sound ? "activado" : "apagado"}
+              {L("Sonido", "Sound")}: {sound ? L("activado", "on") : L("apagado", "off")}
             </button>
           </div>
         </div>
@@ -88,7 +100,7 @@ export function Hero({ sound, setSound }: { sound: boolean; setSound: (v: boolea
             />
             <motion.button
               type="button"
-              aria-label="Jalar la cuerda para pedir el aviso. Con teclado: Enter o Espacio"
+              aria-label={L("Jalar la cuerda para pedir el aviso. Con teclado: Enter o Espacio", "Pull the cord to request the alert. With the keyboard: Enter or Space")}
               className="absolute left-1/2 grid h-14 w-14 -translate-x-1/2 cursor-grab place-items-center rounded-full border-4 border-signal active:cursor-grabbing"
               style={{ top: ROPE_BASE, y: reduced ? 0 : y, touchAction: "none", background: "var(--bg)" }}
               drag={reduced ? false : "y"}
@@ -105,7 +117,7 @@ export function Hero({ sound, setSound }: { sound: boolean; setSound: (v: boolea
               <span className="h-3 w-3 rounded-full bg-signal" aria-hidden />
             </motion.button>
             <span className="absolute left-1/2 top-[230px] w-28 -translate-x-1/2 text-center text-xs text-ink2" aria-hidden>
-              {reduced ? "Presiona" : "Jala hacia abajo"}
+              {reduced ? L("Presiona", "Press") : L("Jala hacia abajo", "Pull down")}
             </span>
           </div>
         </div>

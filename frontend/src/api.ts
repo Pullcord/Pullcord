@@ -1,29 +1,30 @@
 // Cliente de la API de Pullcord. Mismo origen: el proxy de Vite (o Express) reenvía /v1.
+import { tr } from "./i18n";
 export class ApiError extends Error {
   status: number;
   constructor(status: number, original: string) {
     super(original);
     this.status = status;
   }
-  /** Mensaje claro en español. El original (en inglés) se muestra aparte, en letra pequeña. */
+  /** Mensaje claro en el idioma elegido. El original de la API (en inglés) se muestra aparte, en letra pequeña. */
   get friendly(): string {
     const m = this.message;
-    if (this.status === 0) return "No hay conexión con la API de Pullcord.";
-    if (/telegram channel not configured/i.test(m)) return "Este servidor no tiene Telegram activado. Elige Webhook.";
-    if (/webhook must use https/i.test(m)) return "El webhook debe usar https.";
-    if (/webhook host is not allowed/i.test(m)) return "Ese servidor no está permitido como webhook (no puede ser una red privada).";
-    if (/does not resolve/i.test(m)) return "No se pudo resolver el dominio del webhook.";
-    if (/webhook must be a URL/i.test(m)) return "Eso no parece una URL.";
-    if (/credentials/i.test(m)) return "La URL del webhook no puede llevar usuario ni contraseña.";
-    if (/appLabel/i.test(m)) return "El nombre de la app es inválido: máximo 40 caracteres ASCII, sin datos personales.";
-    if (/challenge unknown, used or expired/i.test(m)) return "El reto ya se usó o venció. Pide uno nuevo.";
-    if (/signature does not match/i.test(m)) return "La firma no corresponde a esta dirección.";
-    if (/ownership proof required/i.test(m)) return "Falta la prueba de que la dirección es tuya.";
-    if (/valid G address/i.test(m)) return "Esa no es una dirección G válida.";
-    if (/not found/i.test(m)) return "No existe, o el token no corresponde.";
-    if (this.status === 429) return "Demasiadas solicitudes. Espera un momento.";
-    if (this.status >= 500) return "La API tuvo un problema. Intenta de nuevo.";
-    return "La API rechazó la solicitud.";
+    if (this.status === 0) return tr("No hay conexión con la API de Pullcord.", "Can't reach the Pullcord API.");
+    if (/telegram channel not configured/i.test(m)) return tr("Este servidor no tiene Telegram activado. Elige Webhook.", "This server doesn't have Telegram enabled. Choose Webhook.");
+    if (/webhook must use https/i.test(m)) return tr("El webhook debe usar https.", "The webhook must use https.");
+    if (/webhook host is not allowed/i.test(m)) return tr("Ese servidor no está permitido como webhook (no puede ser una red privada).", "That server isn't allowed as a webhook (it can't be a private network).");
+    if (/does not resolve/i.test(m)) return tr("No se pudo resolver el dominio del webhook.", "The webhook's domain couldn't be resolved.");
+    if (/webhook must be a URL/i.test(m)) return tr("Eso no parece una URL.", "That doesn't look like a URL.");
+    if (/credentials/i.test(m)) return tr("La URL del webhook no puede llevar usuario ni contraseña.", "The webhook URL can't include a username or password.");
+    if (/appLabel/i.test(m)) return tr("El nombre de la app es inválido: máximo 40 caracteres ASCII, sin datos personales.", "The app name is invalid: 40 ASCII characters max, no personal data.");
+    if (/challenge unknown, used or expired/i.test(m)) return tr("El reto ya se usó o venció. Pide uno nuevo.", "The challenge was already used or expired. Request a new one.");
+    if (/signature does not match/i.test(m)) return tr("La firma no corresponde a esta dirección.", "The signature doesn't match this address.");
+    if (/ownership proof required/i.test(m)) return tr("Falta la prueba de que la dirección es tuya.", "Proof that the address is yours is missing.");
+    if (/valid G address/i.test(m)) return tr("Esa no es una dirección G válida.", "That isn't a valid G address.");
+    if (/not found/i.test(m)) return tr("No existe, o el token no corresponde.", "It doesn't exist, or the token doesn't match.");
+    if (this.status === 429) return tr("Demasiadas solicitudes. Espera un momento.", "Too many requests. Wait a moment.");
+    if (this.status >= 500) return tr("La API tuvo un problema. Intenta de nuevo.", "The API had a problem. Try again.");
+    return tr("La API rechazó la solicitud.", "The API rejected the request.");
   }
 }
 

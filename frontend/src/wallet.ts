@@ -1,5 +1,6 @@
 // Freighter: conectar y firmar. Nunca se pide ni se toca una llave secreta.
 import { isConnected, requestAccess, getNetworkDetails, signMessage } from "@stellar/freighter-api";
+import { tr } from "./i18n";
 
 export const TESTNET_PASSPHRASE = "Test SDF Network ; September 2015";
 
@@ -10,13 +11,13 @@ export async function detectFreighter(): Promise<boolean> {
 
 export async function readNetwork() {
   const n = await getNetworkDetails();
-  if (n.error) throw new Error(n.error.message || "No pude leer la red de Freighter.");
+  if (n.error) throw new Error(n.error.message || tr("No pude leer la red de Freighter.", "Couldn't read Freighter's network."));
   return { network: n.network, isTestnet: n.networkPassphrase === TESTNET_PASSPHRASE };
 }
 
 export async function connect(): Promise<string> {
   const r = await requestAccess();
-  if (r.error || !r.address) throw new Error(r.error?.message || "No diste acceso a Freighter.");
+  if (r.error || !r.address) throw new Error(r.error?.message || tr("No diste acceso a Freighter.", "You didn't grant access in Freighter."));
   return r.address;
 }
 
@@ -38,8 +39,8 @@ export function signatureToBase64(sm: unknown): string | null {
 
 export async function signChallenge(message: string, address: string): Promise<string> {
   const r = await signMessage(message, { address, networkPassphrase: TESTNET_PASSPHRASE });
-  if (r.error) throw new Error(r.error.message || "Freighter rechazó la firma.");
+  if (r.error) throw new Error(r.error.message || tr("Freighter rechazó la firma.", "Freighter rejected the signature."));
   const sig = signatureToBase64(r.signedMessage);
-  if (!sig) throw new Error("Freighter no devolvió una firma.");
+  if (!sig) throw new Error(tr("Freighter no devolvió una firma.", "Freighter didn't return a signature."));
   return sig;
 }

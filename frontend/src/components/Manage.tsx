@@ -3,11 +3,15 @@ import { AlertTriangle, Loader2 } from "lucide-react";
 import { ApiError, deleteSubscription, getSubscription, type Subscription } from "../api";
 import { shortAddr } from "../util";
 import { ConsentPanel } from "./ConsentPanel";
+import { tr, useLang } from "../i18n";
 
-type Err = { message: string; original?: string };
-const asErr = (e: unknown): Err => (e instanceof ApiError ? { message: e.friendly, original: e.message } : { message: "Algo salió mal." });
+// Se guarda el error, no el texto: así el mensaje sigue el idioma si se cambia después.
+type Err = { error: unknown };
+const describe = ({ error }: Err): { message: string; original?: string } =>
+  error instanceof ApiError ? { message: error.friendly, original: error.message } : { message: tr("Algo salió mal.", "Something went wrong.") };
 
 export function Manage() {
+  const { L } = useLang();
   const [id, setId] = useState("");
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
@@ -23,7 +27,7 @@ export function Manage() {
       setSub(await getSubscription(id.trim(), token.trim()));
     } catch (err) {
       setSub(null);
-      setError(asErr(err));
+      setError({ error: err });
     } finally {
       setBusy(false);
     }
@@ -46,20 +50,29 @@ export function Manage() {
       setConfirming(false);
       setToken("");
     } catch (err) {
-      setError(asErr(err));
+      setError({ error: err });
     } finally {
       setBusy(false);
     }
   };
 
+  const shown = error ? describe(error) : null;
+  const consentLabel = (s: Subscription["consent"]) =>
+    s?.status === "Active" ? L("Vigente", "Active") : s?.status === "Revoked" ? L("Retirado", "Revoked") : L("Sin registrar", "Not registered");
+
   return (
     <section aria-labelledby="man-title" className="px-4 py-16">
       <div className="mx-auto max-w-3xl">
-        <h2 id="man-title" className="text-3xl font-bold">Gestiona una suscripción</h2>
-        <p className="mt-2 text-ink2">Con el ID y el manageToken que te dimos puedes ver el estado o darte de baja.</p>
+        <h2 id="man-title" className="text-3xl font-bold">{L("Gestiona una suscripción", "Manage a subscription")}</h2>
+        <p className="mt-2 text-ink2">
+          {L(
+            "Con el ID y el manageToken que te dimos puedes ver el estado o darte de baja.",
+            "With the ID and manageToken we gave you, you can check the status or unsubscribe.",
+          )}
+        </p>
         <form onSubmit={view} className="card mt-6 space-y-4 p-5 sm:p-8">
           <div>
-            <label htmlFor="m-id" className="font-medium">ID de la suscripción</label>
+            <label htmlFor="m-id" className="font-medium">{L("ID de la suscripción", "Subscription ID")}</label>
             <input id="m-id" className="field mono mt-1" value={id} onChange={(e) => setId(e.target.value)} autoComplete="off" required />
           </div>
           <div>
@@ -67,28 +80,28 @@ export function Manage() {
             <input id="m-token" className="field mono mt-1" type="password" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" required />
           </div>
           <button type="submit" className="btn btn-primary" disabled={busy || !id || !token}>
-            {busy && <Loader2 className="animate-spin" size={18} aria-hidden />} Ver estado
+            {busy && <Loader2 className="animate-spin" size={18} aria-hidden />} {L("Ver estado", "Check status")}
           </button>
 
           <div aria-live="polite" className="space-y-3">
-            {error && (
+            {shown && (
               <div role="alert" className="rounded-xl border border-err p-3 text-sm">
-                <p className="font-medium text-err">{error.message}</p>
-                {error.original && <p className="mono mt-1 text-xs text-ink2">Original: {error.original}</p>}
+                <p className="font-medium text-err">{shown.message}</p>
+                {shown.original && <p className="mono mt-1 text-xs text-ink2">Original: {shown.original}</p>}
               </div>
             )}
-            {deleted && <p className="font-medium text-ok">Listo: la suscripción se borró.</p>}
+            {deleted && <p className="font-medium text-ok">{L("Listo: la suscripción se borró.", "Done: the subscription was deleted.")}</p>}
             {sub && (
               <dl className="grid gap-2 rounded-xl bg-elevated p-4 text-sm sm:grid-cols-[auto_1fr]">
-                <dt className="text-ink2">Dirección</dt>
+                <dt className="text-ink2">{L("Dirección", "Address")}</dt>
                 <dd className="mono">{shortAddr(sub.address)}</dd>
-                <dt className="text-ink2">Canal</dt>
+                <dt className="text-ink2">{L("Canal", "Channel")}</dt>
                 <dd>{sub.channel}</dd>
-                <dt className="text-ink2">Eventos</dt>
+                <dt className="text-ink2">{L("Eventos", "Events")}</dt>
                 <dd>{sub.events.join(", ")}</dd>
-                <dt className="text-ink2">Vinculado</dt>
-                <dd>{sub.linked ? "Sí" : "Todavía no"}</dd>
-                <dt className="text-ink2">Prueba de propiedad</dt>
+                <dt className="text-ink2">{L("Vinculado", "Linked")}</dt>
+                <dd>{sub.linked ? L("Sí", "Yes") : L("Todavía no", "Not yet")}</dd>
+                <dt className="text-ink2">{L("Prueba de propiedad", "Ownership proof")}</dt>
                 <dd>{sub.ownershipProof}</dd>
                 {sub.appLabel && (
                   <>
@@ -98,8 +111,8 @@ export function Manage() {
                 )}
                 {sub.consent && (
                   <>
-                    <dt className="text-ink2">Consentimiento en cadena</dt>
-                    <dd>{sub.consent.status === "Active" ? "Vigente" : sub.consent.status === "Revoked" ? "Retirado" : "Sin registrar"}</dd>
+                    <dt className="text-ink2">{L("Consentimiento en cadena", "On-chain consent")}</dt>
+                    <dd>{consentLabel(sub.consent)}</dd>
                   </>
                 )}
               </dl>
@@ -111,19 +124,22 @@ export function Manage() {
             <div className="rounded-xl border border-line p-4">
               <p className="flex gap-2 text-sm">
                 <AlertTriangle size={18} className="shrink-0 text-signal-text" aria-hidden />
-                Darte de baja borra la suscripción, la URL del webhook o tu chat ID de Telegram, y el registro de entregas. No se puede deshacer.
+                {L(
+                  "Darte de baja borra la suscripción, la URL del webhook o tu chat ID de Telegram, y el registro de entregas. No se puede deshacer.",
+                  "Unsubscribing deletes the subscription, the webhook URL or your Telegram chat ID, and the delivery log. It can't be undone.",
+                )}
               </p>
               {!confirming ? (
                 <button type="button" className="btn mt-3" onClick={() => setConfirming(true)}>
-                  Darme de baja
+                  {L("Darme de baja", "Unsubscribe")}
                 </button>
               ) : (
-                <div className="mt-3 flex flex-wrap gap-3" role="group" aria-label="Confirmar baja">
+                <div className="mt-3 flex flex-wrap gap-3" role="group" aria-label={L("Confirmar baja", "Confirm unsubscribe")}>
                   <button type="button" className="btn" style={{ borderColor: "var(--err)", color: "var(--err)" }} onClick={remove} disabled={busy}>
-                    Sí, borrar todo
+                    {L("Sí, borrar todo", "Yes, delete everything")}
                   </button>
                   <button type="button" className="btn" onClick={() => setConfirming(false)}>
-                    Cancelar
+                    {L("Cancelar", "Cancel")}
                   </button>
                 </div>
               )}

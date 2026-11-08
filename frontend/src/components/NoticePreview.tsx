@@ -1,4 +1,5 @@
 import { shortAddr } from "../util";
+import { useLang } from "../i18n";
 
 // Formato exacto de src/notify/dispatch.js (paymentPayload y telegramText).
 // Los datos son de ejemplo: no son un pago real.
@@ -48,29 +49,44 @@ const telegram = [
 ].join("\n");
 
 export function NoticePreview() {
+  const { L } = useLang();
   return (
     <section aria-labelledby="prev-title" className="px-4 py-16">
       <div className="mx-auto max-w-5xl">
-        <h2 id="prev-title" className="text-3xl font-bold">Así se ve el aviso</h2>
-        <p className="mt-2 text-ink2">El mismo formato que manda el servidor. Los datos son de ejemplo, no es un pago real.</p>
+        <h2 id="prev-title" className="text-3xl font-bold">{L("Así se ve el aviso", "What the alert looks like")}</h2>
+        <p className="mt-2 text-ink2">
+          {L(
+            "El mismo formato que manda el servidor. Los datos son de ejemplo, no es un pago real.",
+            "The same format the server sends. The data is an example, not a real payment.",
+          )}
+        </p>
         <div className="mt-8 grid items-start gap-8 md:grid-cols-[320px_1fr]">
           <figure className="mx-auto w-full max-w-[320px]">
             <div className="rounded-[2.2rem] border-4 border-control bg-bg p-3">
               <div className="mx-auto mb-3 h-1.5 w-16 rounded-full bg-line" aria-hidden />
-              <p className="px-1 text-xs text-ink2">Pullcord bot · ejemplo</p>
-              <div className="mt-2 rounded-2xl rounded-tl-sm bg-elevated p-3">
+              <p className="px-1 text-xs text-ink2">{L("Pullcord bot · ejemplo", "Pullcord bot · example")}</p>
+              {/* El texto del bot va tal cual lo arma telegramText() en el servidor, que hoy escribe en español. */}
+              <div className="mt-2 rounded-2xl rounded-tl-sm bg-elevated p-3" lang="es">
                 <p className="mono whitespace-pre-wrap text-sm">{telegram}</p>
               </div>
               <div className="h-8" aria-hidden />
             </div>
-            <figcaption className="mt-2 text-center text-sm text-ink2">Telegram (ejemplo)</figcaption>
+            <figcaption className="mt-2 text-center text-sm text-ink2">
+              {L("Telegram (ejemplo)", "Telegram (example). The bot writes in Spanish for now.")}
+            </figcaption>
           </figure>
           <figure className="min-w-0">
-            <p className="mono mb-2 text-sm text-ink2">Cabecera: pullcord-signature: t=&lt;unix&gt;,v1=&lt;hex&gt; (ejemplo)</p>
-            <pre className="mono overflow-x-auto rounded-xl border border-line bg-surface p-4 text-xs sm:text-sm" tabIndex={0} aria-label="JSON del webhook de ejemplo">
+            <p className="mono mb-2 text-sm text-ink2">
+              {L("Cabecera", "Header")}: pullcord-signature: t=&lt;unix&gt;,v1=&lt;hex&gt; ({L("ejemplo", "example")})
+            </p>
+            <pre
+              className="mono overflow-x-auto rounded-xl border border-line bg-surface p-4 text-xs sm:text-sm"
+              tabIndex={0}
+              aria-label={L("JSON del webhook de ejemplo", "Example webhook JSON")}
+            >
               {JSON.stringify(payload, null, 2)}
             </pre>
-            <figcaption className="mt-2 text-sm text-ink2">Webhook (ejemplo)</figcaption>
+            <figcaption className="mt-2 text-sm text-ink2">{L("Webhook (ejemplo)", "Webhook (example)")}</figcaption>
           </figure>
         </div>
       </div>

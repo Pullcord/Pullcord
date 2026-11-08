@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { animate } from "motion/react";
 import { getStats, type Stats as StatsData } from "../api";
 import { useReducedMotion } from "../util";
+import { useLang } from "../i18n";
 
 function Counter({ value }: { value: number }) {
   const reduced = useReducedMotion();
+  const { locale } = useLang();
   const [shown, setShown] = useState(reduced ? value : 0);
   useEffect(() => {
     if (reduced) {
@@ -15,10 +17,11 @@ function Counter({ value }: { value: number }) {
     return () => c.stop();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, reduced]);
-  return <>{shown.toLocaleString("es-MX")}</>;
+  return <>{shown.toLocaleString(locale)}</>;
 }
 
 export function Stats() {
+  const { L } = useLang();
   const [data, setData] = useState<StatsData | null>(null);
   const [offline, setOffline] = useState(false);
 
@@ -38,16 +41,16 @@ export function Stats() {
   }, []);
 
   const items: [string, keyof StatsData][] = [
-    ["Apps integradas", "appsIntegrated"],
-    ["Suscripciones", "subscriptions"],
-    ["Avisos enviados", "notificationsSent"],
+    [L("Apps integradas", "Integrated apps"), "appsIntegrated"],
+    [L("Suscripciones", "Subscriptions"), "subscriptions"],
+    [L("Avisos enviados", "Alerts sent"), "notificationsSent"],
   ];
 
   return (
     <section aria-labelledby="stats-title" className="px-4 py-16">
       <div className="mx-auto max-w-3xl">
-        <h2 id="stats-title" className="text-3xl font-bold">En vivo</h2>
-        <p className="mt-2 text-ink2">Solo conteos de la API. Se actualizan cada 10 segundos.</p>
+        <h2 id="stats-title" className="text-3xl font-bold">{L("En vivo", "Live")}</h2>
+        <p className="mt-2 text-ink2">{L("Solo conteos de la API. Se actualizan cada 10 segundos.", "Counts straight from the API. They refresh every 10 seconds.")}</p>
         <dl className="mt-6 grid gap-4 sm:grid-cols-3">
           {items.map(([label, key]) => (
             <div key={key} className="card p-5">
@@ -57,7 +60,7 @@ export function Stats() {
           ))}
         </dl>
         <p className="mt-3 text-sm" role="status" style={{ color: "var(--err)" }}>
-          {offline ? "Sin conexión con la API." : ""}
+          {offline ? L("Sin conexión con la API.", "Can't reach the API.") : ""}
         </p>
       </div>
     </section>
